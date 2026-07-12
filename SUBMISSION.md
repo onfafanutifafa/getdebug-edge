@@ -70,33 +70,38 @@ submitted commit hash.
 7. `bench.sh` table: model comparison
 8. htop/sensors during a review: 8 threads busy, temperature under limit
 
-## 2-minute video script (≈250 words, storyboard)
+## 2-minute video script (≈260 words, storyboard) — v2, reflects final build
 
-**[0:00–0:20 — problem, talking head or slide]**
+**[0:00–0:18 — problem, talking head or a $200 laptop on the desk]**
 "Cloud AI code reviewers are excellent — if you have fast internet, a company
 card, and permission to send your code abroad. Most African developers have
-none of those. getdebug-edge is CodeRabbit-class code review that runs entirely
+none of those. getdebug-edge is security-first code review that runs entirely
 on the laptops we actually have: free, offline, private."
 
-**[0:20–1:15 — live demo, screen capture]**
-"This is a $400-class laptop with no internet connection." *(airplane-mode
-toggle on screen)* "I point the agent at a fintech project…" *(run agent;
-findings appear)* "…and a 3-billion-parameter model running locally finds the
-SQL injection in this payment webhook and shows the parameterized-query fix.
-In VS Code, findings land in the Problems panel, clickable to the line."
-*(optional, strategy B: "And it can explain the finding in Swahili.")*
+**[0:18–1:05 — live demo, screen capture]**
+"This is a budget laptop with no internet." *(toggle airplane mode on screen)*
+"I point it at a fintech project…" *(run agent; findings stream in)* "…and a
+3-billion-parameter model running locally flags the SQL injection in this
+payment webhook, and a deterministic pass catches a hardcoded secret the model
+alone would miss. In VS Code, findings land in the Problems panel, clickable to
+the line."
 
-**[1:15–1:45 — engineering, cutaways to charts]**
-"Everything is tuned to the contest's 8-gigabyte, CPU-only budget: we
-benchmarked six open models head-to-head, quantized to 4 bits, capped the
-context window, and discovered that using physical cores instead of
-hyperthreads made it 25% faster AND 27 degrees cooler. Peak memory: 3.6 of the
-7-gigabyte budget. Zero throttling."
+**[1:05–1:40 — engineering, cutaways to charts]**
+"Everything is tuned to an 8-gigabyte, CPU-only budget. We benchmarked six open
+models, quantized to 4 bits, and found that using physical cores instead of
+hyperthreads made it 25% faster AND 27 degrees cooler — an energy win where the
+grid is the constraint. On real Ubuntu, under a hard 8-gig ceiling: 3.5 gigs
+peak, no crash, no throttling."
 
-**[1:45–2:00 — impact]**
-"Fintech and health-tech teams get a pre-ship safety net with no cloud bill and
-no data leaving the machine. Free and open-source — built for Africa's real
-hardware."
+**[1:40–2:00 — honesty + impact]**
+"We measured our own accuracy honestly — 68% from the model alone, 82% once we
+added the detectors — and we report our false-positive rate, because a security
+tool should. It's a first-pass safety net with no cloud bill and no data leaving
+the machine. Free and open-source, built for the hardware Africa actually has."
+
+Key on-screen proof to show: airplane-mode toggle, a real finding + fix,
+VS Code Problems panel, the `adtc-profiler`/8 GB no-OOM result, the
+68%→82% recall chart.
 
 ## Score projection (official formula, TPS_REFERENCE = 15.0 provisional)
 
