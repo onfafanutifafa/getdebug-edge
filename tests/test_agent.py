@@ -9,7 +9,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "agent"))
 
-from agent import chars_per_chunk, chunk_file, physical_core_count, run_linters  # noqa: E402
+from agent import ResultCache, chars_per_chunk, chunk_file, physical_core_count, run_linters  # noqa: E402
 from prompts import build_review_prompt, build_system_prompt, extract_findings  # noqa: E402
 
 
@@ -85,6 +85,28 @@ class PromptsTest(unittest.TestCase):
         self.assertIn("Linter output", p)
         p2 = build_review_prompt("a.py", "code", 0, 1)
         self.assertNotIn("Linter output", p2)
+
+
+class ResultCacheTest(unittest.TestCase):
+    def test_round_trip_and_isolation(self):
+        c = ResultCache("model-a.gguf", "system prompt v1")
+        c.put("prompt X", "response X")
+        self.assertEqual(c.get("prompt X"), "response X")
+        self.assertIsNone(c.get("prompt Y"))
+        # Different model or system prompt must not share entries.
+        other = ResultCache("model-b.gguf", "system prompt v1")
+        other.data = c.data
+        self.assertIsNone(other.get("prompt X"))
+
+    def test_error_responses_never_cached(self):
+        c = ResultCache("m.gguf", "s")
+        c.put("p", "[agent error: llama-server request failed: timeout]")
+        self.assertIsNone(c.get("p"))
+
+    def test_disabled_cache_is_inert(self):
+        c = ResultCache("m.gguf", "s", enabled=False)
+        c.put("p", "r")
+        self.assertIsNone(c.get("p"))
 
 
 class EnvironmentTest(unittest.TestCase):

@@ -53,6 +53,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import socket
@@ -143,6 +144,60 @@ class ReviewReport:
     files_scanned: int = 0
     chunks_reviewed: int = 0
     findings: list[Finding] = field(default_factory=list)
+
+
+# Bump when SYSTEM_PROMPT/SKILL/review-prompt shape changes — invalidates
+# cached responses produced under the old prompts.
+PROMPT_VERSION = "2026-07-12"
+CACHE_DIR = Path.home() / ".cache" / "getdebug-edge"
+
+
+class ResultCache:
+    """Persistent chunk-level result cache: identical (chunk, system prompt,
+    model, prompt version) -> reuse the previous response without inference.
+
+    Deterministic decoding makes this exact: the model would produce the
+    same response anyway, so a cache hit is a pure time/energy win on
+    re-runs over unchanged files (the pre-commit workflow's common case).
+    """
+
+    def __init__(self, model_name: str, system: str, enabled: bool = True):
+        self.enabled = enabled
+        self.path = CACHE_DIR / "results.json"
+        self.prefix = hashlib.sha256(
+            f"{model_name}|{PROMPT_VERSION}|{system}".encode()
+        ).hexdigest()[:16]
+        self.data: dict[str, str] = {}
+        self.hits = 0
+        if enabled and self.path.exists():
+            try:
+                self.data = json.loads(self.path.read_text())
+            except (OSError, ValueError):
+                self.data = {}
+
+    def key(self, prompt: str) -> str:
+        return self.prefix + hashlib.sha256(prompt.encode()).hexdigest()[:32]
+
+    def get(self, prompt: str) -> str | None:
+        if not self.enabled:
+            return None
+        hit = self.data.get(self.key(prompt))
+        if hit is not None:
+            self.hits += 1
+        return hit
+
+    def put(self, prompt: str, response: str) -> None:
+        if self.enabled and not response.startswith("[agent error"):
+            self.data[self.key(prompt)] = response
+
+    def save(self) -> None:
+        if not self.enabled:
+            return
+        try:
+            CACHE_DIR.mkdir(parents=True, exist_ok=True)
+            self.path.write_text(json.dumps(self.data))
+        except OSError:
+            pass  # cache is best-effort — never fail a run over it
 
 
 def run_linters(path: Path, max_chars: int = 600) -> str:
@@ -255,6 +310,12 @@ class LlamaServer:
             "--cache-type-k", "q8_0",
             "--cache-type-v", "q8_0",
             "--n-gpu-layers", "0",   # CPU-only: integrated-graphics-only reference hardware
+            # Reuse KV-cache chunks matching the previous request's prefix.
+            # The system prompt + skill (~450 tokens) is identical on every
+            # chunk request — without this, that prefix is re-processed per
+            # chunk; with it, prompt processing restarts at the first
+            # differing token (the chunk itself).
+            "--cache-reuse", "256",
             "--host", "127.0.0.1",
             "--port", str(self.port),
             # No --mlock: let the OS page the model via mmap rather than
@@ -304,6 +365,9 @@ class LlamaServer:
             # observed on a real Paystack file where the model emitted 8
             # near-identical "signatureHeader is not a valid X" findings.
             "repeat_penalty": 1.1,
+            # Keep this request's prompt KV resident so --cache-reuse can
+            # match the shared system+skill prefix on the next request.
+            "cache_prompt": True,
         }).encode()
         req = urllib.request.Request(
             f"{self.base_url}/v1/chat/completions", data=payload,
@@ -326,7 +390,8 @@ class LlamaServer:
 
 
 def review_repo(target: Path, server: LlamaServer, char_budget: int, verbose: bool = False,
-                system: str = SYSTEM_PROMPT, lint: bool = True) -> ReviewReport:
+                system: str = SYSTEM_PROMPT, lint: bool = True,
+                cache: ResultCache | None = None) -> ReviewReport:
     report = ReviewReport(target=str(target), model=str(server.model_path))
     files = discover_files(target)
     report.files_scanned = len(files)
@@ -337,7 +402,12 @@ def review_repo(target: Path, server: LlamaServer, char_budget: int, verbose: bo
         for idx, chunk in enumerate(chunks):
             prompt = build_review_prompt(str(path.relative_to(target)), chunk, idx, len(chunks),
                                          lint_output=lint_output)
-            response = server.complete(prompt, system=system)
+            cached = cache.get(prompt) if cache else None
+            response = cached
+            if response is None:
+                response = server.complete(prompt, system=system)
+                if cache:
+                    cache.put(prompt, response)
             report.chunks_reviewed += 1
             # Flag on parsed `- [severity]` lines, never on the NO_ISSUES
             # sentinel: in testing the model sometimes appended NO_ISSUES
@@ -352,7 +422,9 @@ def review_repo(target: Path, server: LlamaServer, char_budget: int, verbose: bo
                     Finding(file=str(path.relative_to(target)), chunk_index=idx,
                             findings=found, raw_response=response)
                 )
-            if INTER_CHUNK_PAUSE_SECONDS:
+            # Thermal pacing only matters after real inference — cache hits
+            # cost no compute, so don't sleep on them.
+            if INTER_CHUNK_PAUSE_SECONDS and cached is None:
                 time.sleep(INTER_CHUNK_PAUSE_SECONDS)
 
     return report
@@ -375,6 +447,8 @@ def main() -> None:
     parser.add_argument("--diagnostics", action="store_true",
                         help="Also print findings as 'file:line: severity: message' lines "
                              "(VS Code problemMatcher-compatible; see USER_MANUAL.md)")
+    parser.add_argument("--no-cache", action="store_true",
+                        help="Disable the chunk result cache (unchanged files normally skip re-review on repeat runs)")
     args = parser.parse_args()
 
     if not args.target and not args.prompt:
@@ -396,8 +470,10 @@ def main() -> None:
             print(server.complete(args.prompt, system=system))
             return
         budget = chars_per_chunk(args.ctx_size)
+        cache = ResultCache(args.model.name, system, enabled=not args.no_cache)
         report = review_repo(args.target, server, budget, verbose=args.verbose,
-                             system=system, lint=not args.no_lint)
+                             system=system, lint=not args.no_lint, cache=cache)
+        cache.save()
     finally:
         server.stop()
 
@@ -426,7 +502,8 @@ def main() -> None:
                 msg = _re.sub(r"^\s*[-*]\s*[*\[(]*\s*(?:high|medium|low)[])*]*\s*", "", line, flags=_re.IGNORECASE)
                 print(f"{Path(report.target) / f.file}:{lineno}: {sev}: {msg.strip()}")
 
-    print(f"Scanned {report.files_scanned} files, {report.chunks_reviewed} chunks. "
+    cache_note = f" ({cache.hits} chunk(s) from cache)" if cache.hits else ""
+    print(f"Scanned {report.files_scanned} files, {report.chunks_reviewed} chunks{cache_note}. "
           f"{len(report.findings)} chunk(s) flagged. Report: {args.out}")
 
 
