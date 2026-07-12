@@ -1,0 +1,69 @@
+{
+  "model": "qwen2.5-coder-3b-instruct-q4_k_m.gguf",
+  "files": {
+    "db_reports.py": {
+      "findings": 2,
+      "caught": {
+        "sql_injection": true,
+        "empty_list_crash": true
+      },
+      "false_positives": 0,
+      "response_excerpt": "### File Overview and Potential Issues\n\nThe `db_reports.py` file contains two functions: `get_student_fees` and `top_scorer`. The `get_student_fees` function retrieves student fees from the database based on a given student ID, while the `top_scorer` function finds the top scorer from a list of scores.\n\n### Potential Issues\n\n1. **SQL Injection**: The `get_student_fees` function uses string concate"
+    },
+    "backup_tool.py": {
+      "findings": 0,
+      "caught": {
+        "command_injection": true,
+        "hardcoded_secret": true
+      },
+      "false_positives": 0,
+      "response_excerpt": "### File Overview and Potential Issues\n\nThe `backup_tool.py` file contains two functions: `backup_database` and `charge`. The `backup_database` function uses the `os.system` method to execute a command that dumps a PostgreSQL database into a SQL file. The `charge` function is intended to charge an amount using a client's API, but it includes a hardcoded API key.\n\n### Findings\n\n1. **Injection (high"
+    },
+    "upload_handler.js": {
+      "findings": 1,
+      "caught": {
+        "path_traversal": true,
+        "unhandled_error": false
+      },
+      "false_positives": 0,
+      "response_excerpt": "### File Overview and Potential Issues\n\nThe `upload_handler.js` file defines a function `readUserFile` that reads a user's file from the server's `/var/uploads/` directory based on the filename provided in the request query parameters. This function is vulnerable to injection attacks if the filename is not properly validated or sanitized.\n\n### Findings\n\n- **high** Injection: The filename is direct"
+    },
+    "wallet.py": {
+      "findings": 6,
+      "caught": {
+        "weak_hash": false,
+        "negative_percent": true,
+        "empty_people_crash": true
+      },
+      "false_positives": 0,
+      "response_excerpt": "### File Overview and Potential Issues\n\nThe `wallet.py` file contains functions for handling wallet operations such as hashing a PIN, applying a discount on a balance, and splitting a bill among multiple people. The code is designed to be simple and efficient but could potentially have issues related to input validation, error handling, and logic errors.\n\n### Findings\n\n- **[high] Input Validation*"
+    },
+    "sms_notify.js": {
+      "findings": 0,
+      "caught": {
+        "off_by_one": true
+      },
+      "false_positives": 0,
+      "response_excerpt": "### File Overview and Potential Issues\n\nThe `sms_notify.js` file contains two functions: `sendBulk` and `send`. The `sendBulk` function iterates over an array of numbers and calls the `send` function for each number, passing the corresponding message. The `send` function checks if the number is truthy before making a POST request to the `/sms` endpoint with the provided number and message.\n\n### Fi"
+    },
+    "geo_utils.py": {
+      "findings": 3,
+      "caught": {},
+      "false_positives": 3,
+      "response_excerpt": "### File: geo_utils.py\n\nThis code calculates the great-circle distance between two points on the Earth's surface using the Haversine formula. The function takes latitude and longitude coordinates in degrees and returns the distance in kilometers.\n\n**Potential Issues:**\n- **Edge Cases**: If any of the input values are `None` or `NaN`, the function will raise a `TypeError`. This is because the `math"
+    },
+    "currency.js": {
+      "findings": 0,
+      "caught": {},
+      "false_positives": 0,
+      "response_excerpt": "### File Overview and Potential Issues\n\nThe `currency.js` file contains a function `toGhs` that converts an amount from one currency to Ghanaian Cedis (GHS). The function uses a predefined set of exchange rates stored in the `RATES` object. It checks if the provided currency is supported by looking up its rate in the `RATES` object and throws an error if it's not.\n\n### Findings\n\n- **NO_ISSUES**"
+    }
+  },
+  "summary": {
+    "recall": 0.8,
+    "bugs_caught": 8,
+    "bugs_total": 10,
+    "false_positives_on_clean": 3,
+    "seconds": 291.5
+  }
+}

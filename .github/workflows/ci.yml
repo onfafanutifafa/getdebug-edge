@@ -1,0 +1,22 @@
+name: ci
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-22.04   # same OS as the ADTC evaluation environment
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"   # Ubuntu 22.04 system Python
+      - name: Compile check
+        run: python3 -m py_compile agent/agent.py agent/prompts.py eval/run_eval.py
+      - name: Shell syntax check
+        run: bash -n download_model.sh bench.sh
+      - name: Unit tests
+        run: python3 -m unittest discover tests -v
+      - name: Validate metadata.json
+        run: python3 -c "import json; d=json.load(open('metadata.json')); assert d['domain']=='coding_assistants' and len(d['test_prompts'])==2 and d['model']['runtime']=='llama.cpp', 'metadata schema drift'"

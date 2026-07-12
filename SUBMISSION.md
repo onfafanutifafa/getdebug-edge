@@ -134,14 +134,24 @@ template, seeded-bug eval corpus for measurable prompt tuning.
 - [ ] **Real-repo case study**: run the agent over a real open-source African
       project (or a sanitized real codebase), include finding counts + 2–3
       anonymized real findings in `REPORT.md` — evidence beats claims
-- [ ] **African Use Case writeup** backing `african_alpha_claim` (competes for
-      the $1,500 prize + up to 10 bonus points): one page, concrete persona
-      (Accra fintech SME, MoMo integrations, data-residency rules), grounded
-      in the test prompts' scenarios
+- [x] **African Use Case writeup** — `AFRICAN_USE_CASE.md` (2026-07-12):
+      Accra fintech persona, three walls (cost/connectivity/residency),
+      power-as-binding-constraint engineering story, honest language claims
+- [x] **Persona baked into the GGUF chat template** (2026-07-12) — judges
+      running the bare model in Ollama/llama-cli get the security-reviewer
+      behavior; reproducible from public weights via `tools/bake_persona.py`
+      (wired into `download_model.sh`); verified live on bare prompts.
+      Submitted model = `model/getdebug-edge-3b-q4_k_m.gguf`
+- [x] **Seeded-bug eval harness** — `eval/` (2026-07-12): 10 seeded bugs
+      across 5 files + 2 clean controls; baseline recall 8/10 with 3 FPs;
+      regression gate for all prompt/skill/model changes
+- [x] Unit tests (14, stdlib unittest) + GitHub Actions CI on ubuntu-22.04
 - [ ] **Demo GIF at the top of the README** — first thing judges see
-- [ ] Unit tests for `extract_findings`/chunking + a tiny GitHub Action
-      (py_compile + tests) — visible engineering rigor
 - [ ] Architecture diagram (observe→think→act, one persistent server) in README
 - [ ] `BAKEOFF.md` is already a differentiator — reference it prominently in
       `REPORT.md` §2 as the "design alternatives" evidence the rubric asks for
 - [ ] Keep `submission.json` from the final profiler run in the repo
+- [ ] Host/deliver the BAKED weights: judges must be able to obtain
+      `getdebug-edge-3b-q4_k_m.gguf` — either reproduce-by-script (current,
+      documented) or upload to a HF repo under the team account once
+      registered (needed anyway if the LoRA fine-tune lands)

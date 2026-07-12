@@ -33,8 +33,22 @@ fetch() {
   echo "Done: $dest"
 }
 
+bake() {
+  # Bake the getdebug-edge reviewer persona into the chat template so the
+  # model behaves as a code reviewer even when run bare (Ollama/llama-cli
+  # with no system prompt). Reproducible from public weights — see
+  # tools/bake_persona.py. Skipped gracefully if the gguf package is absent.
+  local src="$MODEL_DIR/$MODEL_3B_FILE" dst="$MODEL_DIR/getdebug-edge-3b-q4_k_m.gguf"
+  [ -f "$dst" ] && { echo "Baked model already present at $dst — skipping."; return 0; }
+  if python3 -c "import gguf" 2>/dev/null; then
+    python3 "$SCRIPT_DIR/tools/bake_persona.py" "$src" "$dst"
+  else
+    echo "NOTE: 'pip install gguf' then run: python3 tools/bake_persona.py $src $dst"
+  fi
+}
+
 case "${1:-3b}" in
-  3b)   fetch "$MODEL_3B_FILE" "$MODEL_3B_URL" "Qwen2.5-Coder-3B-Instruct (Q4_K_M, ~2.1 GB)" ;;
+  3b)   fetch "$MODEL_3B_FILE" "$MODEL_3B_URL" "Qwen2.5-Coder-3B-Instruct (Q4_K_M, ~2.1 GB)" && bake ;;
   1.5b) fetch "$MODEL_15B_FILE" "$MODEL_15B_URL" "Qwen2.5-Coder-1.5B-Instruct (Q4_K_M, ~1.0 GB)" ;;
   all)
     fetch "$MODEL_3B_FILE" "$MODEL_3B_URL" "Qwen2.5-Coder-3B-Instruct (Q4_K_M, ~2.1 GB)"

@@ -1,0 +1,42 @@
+{
+  "_comment": "Ground truth for the seeded-bug eval corpus. Each bug has regexes matched (case-insensitive) against the model's raw response for that file. clean=true files measure false positives: any finding there counts as an FP.",
+  "files": {
+    "db_reports.py": {
+      "clean": false,
+      "bugs": {
+        "sql_injection": "sql\\s*injection|parameteri[sz]|string (formatting|interpolation).*(query|sql)|%s.*(query|sql)",
+        "empty_list_crash": "empty (list|scores)|IndexError|ranked\\[0\\]|no (scores|elements)|len\\(scores\\)"
+      }
+    },
+    "backup_tool.py": {
+      "clean": false,
+      "bugs": {
+        "command_injection": "command injection|shell injection|os\\.system|subprocess.*(list|args)|shell=False",
+        "hardcoded_secret": "hard-?coded (secret|key|credential)|api[_ ]?key.*(source|code|expos|leak|environment)|secret.*(commit|env)"
+      }
+    },
+    "upload_handler.js": {
+      "clean": false,
+      "bugs": {
+        "path_traversal": "path traversal|directory traversal|\\.\\./|sanitiz.*(filename|path)|path\\.(join|resolve|normalize|basename)",
+        "unhandled_error": "err(or)? (is )?(not |un)?(handled|checked)|if \\(err\\)|error handling"
+      }
+    },
+    "wallet.py": {
+      "clean": false,
+      "bugs": {
+        "weak_hash": "md5|weak hash|bcrypt|argon2|scrypt|pbkdf2",
+        "negative_percent": "negative (percent|discount|value)|percent < 0|lower bound|increase.*balance",
+        "empty_people_crash": "division by zero|empty (list|people)|len\\(people\\)|ZeroDivisionError"
+      }
+    },
+    "sms_notify.js": {
+      "clean": false,
+      "bugs": {
+        "off_by_one": "off[- ]by[- ]one|<=\\s*numbers\\.length|undefined (element|index)|out of bounds|i < numbers\\.length"
+      }
+    },
+    "geo_utils.py": { "clean": true, "bugs": {} },
+    "currency.js": { "clean": true, "bugs": {} }
+  }
+}

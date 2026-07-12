@@ -70,7 +70,10 @@ from prompts import SYSTEM_PROMPT, build_review_prompt, build_system_prompt, ext
 
 DEFAULT_SKILL_PATH = Path(__file__).resolve().parent.parent / "skills" / "SKILL.md"
 
-DEFAULT_MODEL_PATH = Path(__file__).resolve().parent.parent / "model" / "qwen2.5-coder-3b-instruct-q4_k_m.gguf"
+_MODEL_DIR = Path(__file__).resolve().parent.parent / "model"
+_BAKED = _MODEL_DIR / "getdebug-edge-3b-q4_k_m.gguf"          # persona-baked (see tools/bake_persona.py)
+_BASE = _MODEL_DIR / "qwen2.5-coder-3b-instruct-q4_k_m.gguf"  # upstream weights
+DEFAULT_MODEL_PATH = _BAKED if _BAKED.exists() else _BASE
 
 
 def physical_core_count() -> int:
