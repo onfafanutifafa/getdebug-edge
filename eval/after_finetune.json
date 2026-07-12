@@ -1,0 +1,69 @@
+{
+  "model": "getdebug-edge-3b-finetuned-baked.gguf",
+  "files": {
+    "db_reports.py": {
+      "findings": 2,
+      "caught": {
+        "sql_injection": true,
+        "empty_list_crash": true
+      },
+      "false_positives": 0,
+      "response_excerpt": "This code retrieves student fees from the database and returns the top scorer from a list of scores.\n\n- [high] SQL injection in get_student_fees (line ~2) \u2014 fix: use parameterized queries\n- [medium] logic error in top_scorer (line ~10) \u2014 fix: check len(scores) before accessing index 0"
+    },
+    "backup_tool.py": {
+      "findings": 2,
+      "caught": {
+        "command_injection": false,
+        "hardcoded_secret": true
+      },
+      "false_positives": 0,
+      "response_excerpt": "This code backs up a database using pg_dump and charges money with Stripe API.\n\n- [high] SQL injection in backup_database (line 4) \u2014 fix: parameterized queries\n- [medium] hardcoded secret in charge (line 10) \u2014 fix: environment variable or secrets store"
+    },
+    "upload_handler.js": {
+      "findings": 0,
+      "caught": {
+        "path_traversal": false,
+        "unhandled_error": false
+      },
+      "false_positives": 0,
+      "response_excerpt": "This function reads a file from the server's filesystem and sends it back to the client. If the filename is not provided or does not exist, it will return an error.\n\nNO_ISSUES"
+    },
+    "wallet.py": {
+      "findings": 3,
+      "caught": {
+        "weak_hash": true,
+        "negative_percent": false,
+        "empty_people_crash": true
+      },
+      "false_positives": 0,
+      "response_excerpt": "This code hashes PINs with MD5 and applies discounts as percentages of the balance.\n\n- [high] MD5 for passwords/PINs/signatures (fix: bcrypt/argon2)\n  (line ~1) \u2014 fix: return hashlib.sha256(pin.encode()).hexdigest()\n- [low] Empty list/string, zero, None/null/undefined, missing dict keys\n  \u2014 especially in arithmetic (division), indexing, and slicing. (line ~4)\n  \u2014 fix: share = total / max(1, len(pe"
+    },
+    "sms_notify.js": {
+      "findings": 2,
+      "caught": {
+        "off_by_one": false
+      },
+      "false_positives": 0,
+      "response_excerpt": "This code sends an SMS to multiple recipients by iterating over the numbers array and calling the send function for each number. The send function checks if the number is falsy (empty string, zero, null) before making an API call.\n\n- [medium] Missing error handling on API call (line ~5) \u2014 fix: add try/catch around api.post\n- [low] Unhandled edge case of empty numbers array (line ~1) \u2014 fix: skip if"
+    },
+    "geo_utils.py": {
+      "findings": 1,
+      "caught": {},
+      "false_positives": 1,
+      "response_excerpt": "This function calculates the great-circle distance between two points on the Earth's surface using the Haversine formula.\n\n- [low] Missing input validation (empty lat/lon) \u2014 fix: check for None/null and raise ValueError\n\nNO_ISSUES"
+    },
+    "currency.js": {
+      "findings": 1,
+      "caught": {},
+      "false_positives": 1,
+      "response_excerpt": "This code converts an amount from various currencies to Ghanaian cedis (GHS). It uses a fixed exchange rate table and rounds the result to two decimal places.\n\n- [low] Missing error handling for invalid currency codes (line ~4) \u2014 fix: add a default case in the switch statement"
+    }
+  },
+  "summary": {
+    "recall": 0.5,
+    "bugs_caught": 5,
+    "bugs_total": 10,
+    "false_positives_on_clean": 2,
+    "seconds": 92.5
+  }
+}

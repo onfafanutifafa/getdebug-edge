@@ -33,11 +33,15 @@ OUT = DATA_DIR / "train.jsonl"
 SKILL = (ROOT / "skills" / "SKILL.md").read_text()
 
 
-def load_examples() -> list[dict]:
-    """Read every *.jsonl in data/ (except the output) and de-dup by code."""
+def load_examples(inputs: list[str] | None = None) -> list[dict]:
+    """Read the given data/*.jsonl files (or all, except the output) and
+    de-dup by code. `inputs` lets you select which batch(es) feed a run, e.g.
+    --inputs batch1.jsonl  (stage 1)  or  --inputs batch1.jsonl batch2.jsonl
+    (cumulative stage 2)."""
     seen, examples = set(), []
-    for src in sorted(DATA_DIR.glob("*.jsonl")):
-        if src.name == OUT.name:
+    srcs = [DATA_DIR / n for n in inputs] if inputs else sorted(DATA_DIR.glob("*.jsonl"))
+    for src in srcs:
+        if src.name == OUT.name or not src.exists():
             continue
         for line in src.read_text().splitlines():
             line = line.strip()
@@ -53,9 +57,17 @@ def load_examples() -> list[dict]:
 
 
 def main() -> None:
+    import argparse
+    ap = argparse.ArgumentParser(description=__doc__)
+    ap.add_argument("--inputs", nargs="*", default=None,
+                    help="Specific data/*.jsonl files to include (default: all). "
+                         "For staged training: --inputs batch1.jsonl, then "
+                         "--inputs batch1.jsonl batch2.jsonl, etc.")
+    args = ap.parse_args()
+
     system = build_system_prompt(SKILL)
     rows = []
-    for rec in load_examples():
+    for rec in load_examples(args.inputs):
         code, completion = rec["code"], rec["completion"].strip()
         # Single-file review: chunk 1/1, no linter section (kept simple and
         # deterministic; the linter hint is optional context at inference).
