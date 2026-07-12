@@ -80,6 +80,31 @@ tool existing for this user and not existing.
     letting it reason briefly before the findings list recovered full recall.
   - *Findings parsed from severity lines, never a sentinel*: the model
     sometimes appends "NO_ISSUES" after a valid findings list.
+- **Fine-tuning: attempted, measured, and rejected** (full data in
+  [`finetune/RESULTS.md`](./finetune/RESULTS.md)). We did not assume a LoRA
+  fine-tune would help — we built a seeded-bug eval harness (`eval/`: 10
+  planted bugs across 5 files + 2 clean controls) and tested it. Two LoRA
+  runs on a free Colab T4, each scored on the identical harness against the
+  base model's **8/10 recall**:
+
+  | Configuration | Recall | False positives | 
+  |---|---|---|
+  | Base model (prompt + skill + linter) | **8/10** | 3 |
+  | LoRA, 50 hand-authored examples | 5/10 | 2 |
+  | LoRA, 100 examples (43 multi-bug) | 1/10 | 1 |
+
+  Both regressed. The 50-example run learned *terseness* (stop after one
+  finding); the 100-example run *overfit to templated data* and defaulted to
+  "NO_ISSUES" on differently-written code. Diagnosis: Qwen2.5-Coder-3B is
+  already a strong code reviewer, and small fine-tunes on narrow data can only
+  narrow it — beating the base would require thousands of diverse, real
+  examples with no guaranteed win, out of scope for the timeline. **We ship
+  the well-prompted base model.** The reproducible pipeline and the eval gate
+  are retained for a future large-corpus effort. This is the contest's
+  systems-engineering thesis in miniature: we measured our way to *not* adding
+  complexity, and the accuracy came from the system around the model (prompt
+  design, skill methodology, linter context, deterministic decoding) rather
+  than from retraining it.
 
 ---
 
