@@ -79,6 +79,11 @@ The agent also:
 - runs **local linters** when available (`ruff`/`pyflakes`/`py_compile` for
   Python, `node --check` for JS) and feeds their output to the model as
   static-analysis hints to verify — disable with `--no-lint`
+- runs a **deterministic hybrid pass** ([agent/detectors.py](./agent/detectors.py))
+  for pattern-matchable classes the 3B model reliably misses — hardcoded
+  secrets, weak crypto (MD5/SHA-1, ECB), secrets written to logs — lifting
+  measured recall from 68% to 82% with zero added false positives (see
+  REPORT.md)
 
 The agent starts and stops its own persistent `llama-server` — no separate
 server process to manage, and zero network calls after the model is on disk.

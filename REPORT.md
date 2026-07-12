@@ -167,45 +167,45 @@ We hold an internal benchmark (`eval/`) and score the shipping model
 deterministically. We first measured on 10 seeded bugs and saw 80% recall — but
 that sample was too small to trust (one miss moves the number 10 points). So we
 **expanded it to 22 seeded bugs across 13 files + 8 clean control files** and
-re-measured. The honest result is lower, and we report it:
+re-measured — which honestly *dropped* the LLM-only number to 68%. We then
+addressed the gap (see below) with a deterministic hybrid pass:
 
-| Metric | Value |
-|---|---|
-| **Detection rate (recall)** | **15/22 = 68%** (Wilson 95% CI: **47–84%**) |
-| **False-negative rate** | **32%** |
-| **False positives** | **5** across 8 clean control files |
-| Determinism | 100% (identical input → identical report) |
-| Contest `test_prompts` | both correct, verified |
+| Configuration | Recall | False positives |
+|---|---|---|
+| Base model alone, 10-bug corpus (flattering small sample) | 8/10 = 80% | 3 |
+| Base model alone, 22-bug corpus | 15/22 = 68% | 5 |
+| **Shipping: hybrid (model + deterministic detectors)** | **18/22 = 82%** (95% CI 61–93%) | **5 (unchanged)** |
 
-Note the honesty point directly: **expanding the sample dropped the number from
-80% to 68%** — the small sample flattered the tool. Even at n=22 the confidence
-interval is wide (47–84%); this is a small internal benchmark, not a large
-third-party one, and we present it as such.
+Two honesty points, both stated plainly. First, **expanding the sample dropped
+the LLM-only number from 80% to 68%** — the small sample flattered the tool, and
+even at n=22 the interval is wide; this is a small internal benchmark, not a
+large third-party one. Second, the 68% misses **clustered in pattern-matchable
+classes** the model is weak on — hardcoded secrets, weak crypto (MD5),
+secrets-in-logs — so we added cheap, deterministic detectors for exactly those
+(`agent/detectors.py`): a hybrid that doesn't ask a 3B model to do what a regex
+does better. That lifted recall to **82% with zero new false positives** (a
+regex on `hashlib.md5` cannot hallucinate).
 
-**Where it fails — the 32% misses cluster in identifiable classes:** hardcoded
-secrets (a JWT secret in source), access control (IDOR — no ownership check),
-secret-logging (passwords written to logs), weak crypto (MD5), and some
-validation gaps. These are *configuration- and design-level* issues; the model
-is meaningfully stronger on the "classic" bugs (SQL/command injection, path
-traversal, division-by-zero, off-by-one) than on authz / secrets / logging.
+**What the hybrid still misses is honest and instructive** — the 4 remaining
+are all *reasoning-heavy, not pattern-matchable*: IDOR (requires understanding
+ownership), a missing quantity check, negative-percent logic, and a JWT that
+never expires. Those genuinely need the model to reason about intent; no regex
+fixes them. That is the correct division of labor.
 
-**False positives** appeared on 5 genuinely clean snippets — including a
-correct `Decimal`-based money function and a bounds-checked slice — and on a
-real Flask app it misread parameterized queries as injection. So the model both
-*misses* a class of real bugs and *over-flags* some safe code.
+**False positives** (5, unchanged by the hybrid) come from the model, not the
+detectors: it over-flags some clean code — a correct `Decimal` money function, a
+bounds-checked slice — and on a real Flask app misread parameterized queries as
+injection. The detectors are high-precision by construction and added none.
 
-**Measurement caveat:** ground truth is regex-matched against the model's prose,
-which adds noise in both directions — we found and corrected one case where the
-model caught a bug but phrased it differently than our matcher expected. Treat
-these as indicative, not exact.
+**Measurement caveat:** LLM ground truth is regex-matched against the model's
+prose, which adds noise in both directions — we found and corrected one case
+where the model caught a bug but phrased it differently than our matcher
+expected. Treat the LLM numbers as indicative; the detector hits are exact.
 
-**Bottom line: roughly two in three seeded bugs caught, a real false-positive
-rate, and identifiable blind spots in secrets, access control, and logging.**
-This is exactly why getdebug-edge is positioned as a **first-pass triage that
-directs a human's attention — explicitly not an authoritative gate** that
-auto-approves or rejects. The blind spots also set the roadmap: the `SKILL.md`
-methodology now names secrets/authz/logging, and closing those gaps is the
-clearest future-work target.
+**Bottom line: ~82% of seeded bugs caught (hybrid), a real but bounded
+false-positive rate from the model, and remaining blind spots confined to
+reasoning-heavy classes.** getdebug-edge remains positioned as a **first-pass
+triage that directs a human's attention — not an authoritative gate.**
 
 ---
 

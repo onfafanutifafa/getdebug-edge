@@ -68,6 +68,7 @@ from pathlib import Path
 import shutil
 
 from prompts import SYSTEM_PROMPT, build_review_prompt, build_system_prompt, extract_findings
+from detectors import scan_text
 
 DEFAULT_SKILL_PATH = Path(__file__).resolve().parent.parent / "skills" / "SKILL.md"
 
@@ -399,6 +400,14 @@ def review_repo(target: Path, server: LlamaServer, char_budget: int, verbose: bo
     for path in files:
         chunks = chunk_file(path, char_budget)
         lint_output = run_linters(path) if lint else ""
+        # Deterministic hybrid pass: cheap, high-precision detectors for the
+        # pattern-matchable classes the model reliably misses (secrets, weak
+        # crypto, secrets-in-logs — see eval/). Added directly as findings.
+        det = scan_text(path.read_text(errors="ignore"))
+        if det:
+            report.findings.append(
+                Finding(file=str(path.relative_to(target)), chunk_index=-1,
+                        findings=det, raw_response="[deterministic detectors]"))
         for idx, chunk in enumerate(chunks):
             prompt = build_review_prompt(str(path.relative_to(target)), chunk, idx, len(chunks),
                                          lint_output=lint_output)

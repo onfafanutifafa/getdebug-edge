@@ -26,6 +26,7 @@ from agent import (  # noqa: E402
     LlamaServer, chars_per_chunk, chunk_file, physical_core_count, run_linters,
 )
 from prompts import build_review_prompt, build_system_prompt, extract_findings  # noqa: E402
+from detectors import scan_text  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
 CORPUS = ROOT / "eval" / "corpus"
@@ -57,6 +58,11 @@ def main() -> None:
                 server.complete(build_review_prompt(fname, c, i, len(chunks), lint), system=system)
                 for i, c in enumerate(chunks)
             )
+            # Hybrid: append deterministic-detector findings, exactly as the
+            # agent does, so the eval measures the shipping configuration.
+            det = scan_text(path.read_text(errors="ignore"))
+            if det:
+                response += "\n" + "\n".join(det)
             findings = extract_findings(response)
             entry = {"findings": len(findings), "caught": {}, "false_positives": 0}
             if spec["clean"]:

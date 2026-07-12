@@ -11,6 +11,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "agent"))
 
 from agent import ResultCache, chars_per_chunk, chunk_file, physical_core_count, run_linters  # noqa: E402
 from prompts import build_review_prompt, build_system_prompt, extract_findings  # noqa: E402
+from detectors import scan_text  # noqa: E402
 
 
 class ExtractFindingsTest(unittest.TestCase):
@@ -107,6 +108,46 @@ class ResultCacheTest(unittest.TestCase):
         c = ResultCache("m.gguf", "s", enabled=False)
         c.put("p", "r")
         self.assertIsNone(c.get("p"))
+
+
+class DetectorTest(unittest.TestCase):
+    """The deterministic hybrid pass must catch the pattern-matchable classes
+    the model misses, and — critically — never fire on clean code."""
+
+    def _has(self, findings, needle):
+        return any(needle.lower() in f.lower() for f in findings)
+
+    def test_hardcoded_stripe_key(self):
+        f = scan_text('API_KEY = "sk_live_abc123DEF456ghi789"\n')
+        self.assertTrue(self._has(f, "hardcoded secret"))
+
+    def test_jwt_secret_by_varname(self):
+        f = scan_text('JWT_SECRET = "supersecret123"\n')
+        self.assertTrue(self._has(f, "hardcoded secret"))
+
+    def test_md5_weak_hash(self):
+        f = scan_text("import hashlib\nh = hashlib.md5(pw.encode())\n")
+        self.assertTrue(self._has(f, "weak hash"))
+
+    def test_ecb_mode(self):
+        f = scan_text("cipher = AES.new(KEY, AES.MODE_ECB)\n")
+        self.assertTrue(self._has(f, "ecb"))
+
+    def test_password_in_logs(self):
+        f = scan_text('logging.info("user=%s pass=%s", user, password)\n')
+        self.assertTrue(self._has(f, "sensitive data"))
+
+    def test_env_ref_not_flagged(self):
+        # A secret read from the environment is correct, not a finding.
+        self.assertEqual(scan_text('API_KEY = os.environ["API_KEY"]\n'), [])
+
+    def test_placeholder_not_flagged(self):
+        self.assertEqual(scan_text('API_KEY = "changeme"\n'), [])
+
+    def test_clean_code_silent(self):
+        clean = ("def add(a, b):\n    return a + b\n\n"
+                 "import bcrypt\nh = bcrypt.hashpw(pw, bcrypt.gensalt())\n")
+        self.assertEqual(scan_text(clean), [])
 
 
 class EnvironmentTest(unittest.TestCase):
