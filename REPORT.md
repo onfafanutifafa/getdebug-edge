@@ -147,8 +147,19 @@ tool existing for this user and not existing.
 
 These are self-reported development benchmarks (llama.cpp b9960,
 adtc-profiler 0.1.0, 2026-07-11). Official scores are measured by the ADTC
-profiler on the standard evaluation machine; re-measurement on
-reference-class Ubuntu hardware is planned before submission.
+profiler on the standard evaluation machine.
+
+**Reference-constraint run** (2026-07-12, full detail in
+[`REFERENCE_BENCHMARK.md`](./REFERENCE_BENCHMARK.md)): the agent was also run
+inside a container pinned to the contest constraints — **Ubuntu 22.04, 4 CPUs,
+8 GB RAM with swap disabled**, llama.cpp b9975, Python 3.10.12. Result: a full
+review of a real Flask web app completed with **3.54 GB peak RAM, no OOM, no
+crash** (exit 0) — verifying safety under the 8 GB disqualification ceiling on
+the actual evaluation OS. 4-core generation throughput was 6.1 t/s (indicative;
+absolute clock still needs true i5 hardware). The case study also honestly
+surfaced the 3B model's precision ceiling — it over-flagged correctly
+parameterized queries as injection — which is why the tool is positioned as a
+first-pass triage, not an authoritative gate.
 
 **Accuracy spot-check** (seeded buggy fintech sample: SQL injection, missing
 empty-list guard, input-validation gaps): the model caught all seeded issues
