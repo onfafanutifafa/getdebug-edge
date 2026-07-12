@@ -161,14 +161,37 @@ surfaced the 3B model's precision ceiling — it over-flagged correctly
 parameterized queries as injection — which is why the tool is positioned as a
 first-pass triage, not an authoritative gate.
 
-**Accuracy spot-check** (seeded buggy fintech sample: SQL injection, missing
-empty-list guard, input-validation gaps): the model caught all seeded issues
-deterministically (two identical runs), including correct parameterized-query
-and guard-clause fixes. On a 765-line real-world API (payments, sessions,
-security plugins), it stayed appropriately silent on 11 of 12 clean files and
-raised substantive validation findings on the payment-provider integration.
-Both contest `test_prompts` were verified to produce correct, complete
-answers from the submitted model.
+### Measured accuracy — false negatives and false positives, stated plainly
+
+We hold a small internal benchmark (`eval/`, 10 seeded bugs across 5 files + 2
+clean control files) and score the shipping model on it deterministically.
+These are honest, self-reported numbers on a **small sample** — not a large
+third-party benchmark — and we publish both sides rather than only the recall:
+
+| Metric | Value | Detail |
+|---|---|---|
+| **Detection rate (recall)** | **80%** | 8 of 10 seeded bugs caught |
+| **False-negative rate** | **20%** | 2 of 10 missed: a weak-hash (MD5-for-password) case and one unchecked-error case |
+| **False positives (clean controls)** | **3** across 2 clean files | all 3 on one pure-math file (Haversine), which has no external input |
+| Determinism | 100% | identical input → identical report (temp 0 + repeat penalty) |
+| Contest `test_prompts` | both correct | verified complete, correct answers from the shipping model |
+
+Beyond the seeded set, the real-repo case study (the Flask tutorial app, see
+`REFERENCE_BENCHMARK.md`) exposed the same tendency on well-written code: the
+model **over-flags**, reporting two `[high]` SQL-injection findings on queries
+that were correctly parameterized and therefore safe.
+
+**The honest characterization: the model errs toward flagging.** It rarely
+misses a blatant bug (high recall), but it produces false positives on clean
+and idiomatic code — most often on code with no external input, or on safe
+patterns (parameterized queries) it misreads as unsafe. The 20% false-negative
+rate skews toward subtler classes (weak cryptography, some error-handling
+gaps), which is why the `SKILL.md` methodology names those categories
+explicitly. This precision ceiling is inherent to a 3B model and is the
+central reason getdebug-edge is positioned as a **first-pass triage that
+directs a human's attention**, not an authoritative gate that auto-approves or
+auto-rejects. A reviewer must confirm each finding — but the tool reliably
+points them at the code worth confirming.
 
 ---
 
