@@ -66,6 +66,16 @@ tool existing for this user and not existing.
     (`ruff` → `pyflakes` → `py_compile`; `node --check`) and feeds trimmed
     output to the model as hints to verify — measurably improved recall on
     unvalidated-input findings. Degrades gracefully to nothing installed.
+  - *Deterministic hybrid detectors* (`agent/detectors.py`): a cheap,
+    LLM-free pass for the pattern-matchable classes the eval proved the 3B
+    model reliably misses — hardcoded secrets (known token formats + secret-
+    named string literals, excluding env-refs and placeholders), weak crypto
+    (MD5/SHA-1, ECB mode, weak RNG in a security context), and secrets written
+    to logs. These run alongside the model and their findings merge into the
+    report. This is the *principle of not asking a 3B model to do what a regex
+    does better*: it lifted measured recall from 68% to 82% with zero added
+    false positives (a `hashlib.md5` match cannot hallucinate). It also mirrors
+    the free-tier detectors of the hosted getdebug product.
   - *adtc-profiler* for pre-submission self-checks against the official
     metrics.
 - **Key engineering decisions from testing:**
@@ -219,6 +229,14 @@ integration, adtc-profiler output, bench.sh comparison table. -->
 
 ## Known Limitations
 
+- **Remaining false negatives are reasoning-heavy classes** the deterministic
+  detectors can't reach: access control (IDOR), business-logic validation
+  (missing quantity/bounds checks), and semantic issues like a token that never
+  expires. These need the model to reason about intent; the clearest future
+  work is a targeted skill/prompt pass or lightweight taint analysis for authz.
+- **The model's false-positive rate on clean code is real** (it over-flagged
+  correctly-parameterized queries in the Flask case study). Mitigated by the
+  first-pass-triage positioning, but not eliminated.
 - Chunking is token-budgeted but line-boundary-based; tree-sitter AST
   chunking is future work.
 - Findings parsing is regex-based, tuned for recall over precision.
@@ -242,5 +260,7 @@ integration, adtc-profiler output, bench.sh comparison table. -->
 - Self-check tooling: [adtc-profiler](https://github.com/Africa-Deep-Tech-Foundation/adtc-profiler)
   (Africa Deep Tech Foundation)
 - Optional linters surfaced to the model: ruff / pyflakes / Node.js `--check`
+- Deterministic detectors (`agent/detectors.py`) are original, regex-based, and
+  run fully offline — no third-party SAST engine is bundled.
 - All agent code (`agent/`, `skills/`, scripts) is original work, GPL-3.0
   licensed (see `LICENSE`)
