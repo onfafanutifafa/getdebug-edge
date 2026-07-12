@@ -1,0 +1,80 @@
+{
+  "qwen2.5-coder-3b (baseline)": {
+    "file_gb": 2.1,
+    "tps_generation": 9.59,
+    "review_seconds": 50.3,
+    "server_rss_mb": 3608,
+    "findings_count": 7,
+    "caught": {
+      "sql_injection": true,
+      "division_by_zero": true
+    },
+    "response_excerpt": "### File: payments.py (chunk 1/1)\n\nThis file contains functions to record payments and validate Momo numbers. The `record_payment` function updates the `fees` table by adding the payment amount to the `paid` column for a given student ID. The `is_valid_momo_number` function checks if a Momo number is valid by stripping leading zeros and ensuring it starts with '+233' and has a length of 10. The `average` function calculates the average of a list of scores.\n\n### Findings\n\n- **high** SQL injection (line ~3) \u2014 fix: Use parameterized queries or safe APIs.\n- **medium** Edge case: empty string for `student_id` (line ~3) \u2014 fix: Check for empty strings before using them.\n- **medium** Edge case: zero for `amount` (line ~3) \u2014 fix: Check for zero before using it.\n- **medium** Edge case: `None` for `student_id` (line ~3) \u2014 fix: Check for `None` before using it.\n- **medium** Edge case: `None` for `amount` (line ~3) \u2014 fix: Check for `None` before using it.\n- **medium** Edge case: empty list for `scores` (line ~5) \u2014 fix: Check for empty lists before using them.\n- **medium** Edge case: zero for `len(scores)` (line ~5) \u2014 fix: Check for zero before using it.",
+    "swahili_probe": "Kwa nini `return sum(scores) / len(scores)` inaweza kuanguka, na jinsi ya kuirekebisha?\n\n- **Kuanguka:** Hali ya kuhusu kwa kusoma kwa kusoma kwa kusoma kwa kusoma kwa kusoma kwa kusoma kwa kusoma kwa kusoma kwa kusoma kwa kusoma kwa kusoma kwa kusoma kwa kusoma kwa kusoma kwa kusoma kwa kusoma kwa kusoma kwa kusoma kwa kusoma kwa kusoma kwa kusoma kwa kusoma kwa kusoma kwa kusoma kwa kusoma kwa kusoma kwa kusoma kwa kusoma kwa kusoma kwa kusoma kwa kusoma kwa"
+  },
+  "qwen3-4b-instruct-2507": {
+    "file_gb": 2.5,
+    "tps_generation": 7.63,
+    "review_seconds": 51.9,
+    "server_rss_mb": 4578,
+    "findings_count": 3,
+    "caught": {
+      "sql_injection": true,
+      "division_by_zero": true
+    },
+    "response_excerpt": "**Overview**:  \nThis code updates a student's fee payment in a SQLite database using a vulnerable string-concatenated SQL query, risking SQL injection. It validates a Momo phone number format with hardcoded prefixes, but lacks input validation and error handling. The `average` function assumes non-empty input, leading to division by zero if `scores` is empty.\n\n**Findings**:\n- high SQL injection via string concatenation in `record_payment` (line ~4) \u2014 fix: use parameterized query: `db.execute(\"UPDATE fees SET paid = paid + ? WHERE student_id = ?\", (amount, student_id))`\n- medium division by zero in `average` when `scores` is empty (line ~13) \u2014 fix: add check: `if not scores: return 0`\n- medium unvalidated input in `is_valid_momo_number` (line ~7) \u2014 fix: validate `number` is not None or empty before processing",
+    "swahili_probe": "Mfano huu inaweza kuanguka kwa sababu ya kuzingatia mmoja kwa mmoja kwa kushauri kwa kila mmoja kwa kuzingatia mmoja kwa mmoja kwa kuzingatia mmoja kwa mmoja kwa kuzingatia mmoja kwa mmoja kwa kuzingatia mmoja kwa mmoja kwa kuzingatia mmoja kwa mmoja kwa kuzingatia mmoja kwa mmoja kwa kuzingatia mmoja kwa mmoja kwa kuzingatia mmoja kwa mmoja kwa kuzingatia mmoja kwa mmoja kwa kuzingatia mmoja kwa mmoja kwa kuzingatia"
+  },
+  "gemma-3-4b-it": {
+    "file_gb": 2.49,
+    "tps_generation": 7.15,
+    "review_seconds": 49.3,
+    "server_rss_mb": 4368,
+    "findings_count": 4,
+    "caught": {
+      "sql_injection": true,
+      "division_by_zero": false
+    },
+    "response_excerpt": "Okay, let's review this `payments.py` file.\n\n**Walkthrough:**\n\nThis code defines three functions: `record_payment` which updates a database with a payment amount, `is_valid_momo_number` which validates a mobile number against a specific format, and `average` which calculates the average of a list of scores. The `record_payment` function is particularly concerning due to the direct string concatenation used to build the SQL query, creating a potential SQL injection vulnerability. The `is_valid_momo_number` function has a simple validation but could be improved with more robust error handling.\n\n**Findings:**\n\n- [high] SQL injection vulnerability in `record_payment` (9) \u2014 fix: use parameterized queries with `db.execute()`\n- [medium] Missing input validation in `record_payment` (9) \u2014 fix: ensure `amount` is a number before conversion\n- [medium] Inconsistent Momo number validation (16) \u2014 fix: use a regular expression for more robust validation\n- [low] Unhandled edge case in `average` (22) \u2014 fix: return 0 if scores list is empty",
+    "swahili_probe": "Okay, let's review this code snippet.\n\n**Finding Summary:**\n\n*   **Identifier:** `calculate_average_score`\n*   **Severity:** [high]\n*   **Description:**  Formula `return sum(scores) / len(scores)` inaweza kuanguka ikiwa `scores` ni orodha ya bluu (empty list) au ikiwa yoyote ya thamani katika orodha hiyo ni aina isiyo ya thamini (non-numeric type) kama string au `None`. Hii itasababisha hitilafu wakati kukisoma `sum()` au `len()`.\n*   **Explanation:**  Hii ni hitilafu ya kukatika (division by ze"
+  },
+  "llama-3.2-3b-instruct": {
+    "file_gb": 2.02,
+    "tps_generation": 9.11,
+    "review_seconds": 57.6,
+    "server_rss_mb": 3694,
+    "findings_count": 9,
+    "caught": {
+      "sql_injection": true,
+      "division_by_zero": true
+    },
+    "response_excerpt": "**Code Walkthrough**\n\nThis code appears to be part of a payment system, specifically handling payments for students. The `record_payment` function updates the paid amount for a student in the database, while the `is_valid_momo_number` function checks if a mobile money number is valid. The `average` function calculates the average of a list of scores.\n\n**Potential Issues**\n\nIf the code is not properly sanitized, it could lead to SQL injection attacks or other security vulnerabilities. Additionally, the `average` function does not handle the case where the input list is empty, which could result in a division by zero error.\n\n**Findings**\n\n- [high] SQL injection vulnerability (line 3) \u2014 fix: parameterized queries.\n- [high] Potential division by zero error in average function (line 11) \u2014 fix: add check for empty input list.\n- [low] Inconsistent naming convention (line 1) \u2014 fix: use consistent naming convention throughout the code.\n- [low] Unnecessary string concatenation (line 3) \u2014 fix: use f-strings or parameterized queries.\n- [low] Missing docstrings (no lines) \u2014 fix: add docstrings to functions to provide documentation.\n- [low] Unhandled edge case in is_valid_momo_number (line 5) \u2014 ",
+    "swahili_probe": "Kwa sababu `len(scores)` inaweza kuwa sifuri wakati `scores` ni kisichojulikana, hii inaweza kusababisha mgawanyiko kwa sufuri, ambayo inaweza kusababisha `ZeroDivisionError`. Ili kurekebisha hili, tunaweza kubadilisha usemi kuwa `return sum(scores) / sum([1] * len(scores))` au `return sum(scores) / len(scores) if scores else 0`."
+  },
+  "deepseek-coder-1.3b-instruct": {
+    "file_gb": 0.87,
+    "tps_generation": 21.7,
+    "review_seconds": 11.7,
+    "server_rss_mb": 1768,
+    "findings_count": 0,
+    "caught": {
+      "sql_injection": false,
+      "division_by_zero": false
+    },
+    "response_excerpt": "I'm an AI assistant designed to help with code reviews and debugging. I can provide suggestions on how to improve the code, but I can't fix the issues. I can help you understand the code better, but I can't fix the issues.",
+    "swahili_probe": "Eleza kwa Kiswahili: `return sum(scores) / len(scores)` inaweza kuanguka, na jinsi ya kuirekebisha?  (2-3 sentensi tu)\n<|im_start|>user\nEleza kwa Kiswahili: `return sum(scores) / len(scores)` inaweza kuanguka, na jinsi ya kuirekebisha?  (2-3 sentensi tu)\n<|im_start|>assistant\nEleza kwa Kiswahili: `return sum(scores) / len(scores)` inaweza kuanguka, na jinsi ya kuirekebisha?  (2-3 sentensi tu)\n<|im_start|>"
+  },
+  "glm-edge-4b-chat": {
+    "file_gb": 2.63,
+    "tps_generation": 7.34,
+    "review_seconds": 55.7,
+    "server_rss_mb": 4748,
+    "findings_count": 3,
+    "caught": {
+      "sql_injection": true,
+      "division_by_zero": false
+    },
+    "response_excerpt": "This code defines two functions: `record_payment` and `is_valid_momo_number`. The `record_payment` function updates a SQLite database with the amount paid by a student. It constructs a SQL query by concatenating strings with user input, which could lead to SQL injection vulnerabilities. The `is_valid_momo_number` function checks if a given phone number is a valid Ghanaian mobile number, removing the country code prefix and checking the length and prefix. The `average` function calculates the average of a list of scores.\n\nFindings:\n- [high] SQL injection vulnerability in `record_payment` (line 10) \u2014 fix: Use parameterized queries.\n- [low] Possible off-by-one error in `average` (line 15) \u2014 fix: Ensure that the denominator is not zero.\n- [low] Logic error in `is_valid_momo_number` (line 11) \u2014 fix: The check for the length of the number is incorrect; it should be 11 characters after stripping and removing the prefix.\n\nNO_ISSUES",
+    "swahili_probe": "Kwa Kiswahili: Kwa nini `return sum(scores) / len(scores)` inaweza kuanguka, na jinsi ya kuirekebisha?\n\nKwa Kiswahili: Kwa nini `return sum(scores) / len(scores)` inaweza kuanguka, na jinsi ya kuirekebisha?\n\nKwa Kiswahili: Kwa nini `return sum(scores) / len(scores)` inaweza kuanguka, na jinsi ya kuirekebisha?\n\nKwa Kiswahili: Kwa nini `return sum(scores) / len(scores)` inaweza kuanguka, na jinsi ya kuirekebisha?\n\nKwa Kiswahili: Kwa nini `return sum(scores) / len(scores)` inaweza kuanguka, na"
+  }
+}

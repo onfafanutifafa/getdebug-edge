@@ -1,0 +1,37 @@
+{
+  "team_id": "TODO-register-on-adtf-portal",
+  "domain": "coding_assistants",
+  "language_scope": ["en"],
+  "african_alpha_claim": true,
+  "budget_laptop_claim": true,
+  "submitter": {
+    "name": "fafa",
+    "email": "nutifafadav@gmail.com",
+    "github_handle": "TODO-your-github-handle"
+  },
+  "cross_disciplinary_pairing": {
+    "discipline": "software_security",
+    "load_bearing": true,
+    "description": "The agent's reasoning loop (observe -> think -> act over a local codebase) applies autonomous-agent orchestration to secure-coding review, so SMEs and regulated teams (fintech, health-tech) without cloud-tooling budgets or the ability to send code off-premises can still get baseline vulnerability and correctness checks before shipping."
+  },
+  "test_prompts": [
+    {
+      "prompt_id": "tp_001",
+      "prompt": "This Python function computes the average mobile-money transaction fee for a batch of transfers in a Ghanaian savings app. It works most of the day but crashes in production every morning just after midnight, and finance says the fee totals are sometimes wrong for large batches. Find the bug(s), explain why each happens, and show the fixed code.\n\ndef batch_fee_report(transfers):\n    total_fees = 0\n    for t in transfers:\n        fee = t['amount'] * 0.01\n        if fee > 10:\n            fee == 10  # cap fee at 10 cedis\n        total_fees += fee\n    return {\n        'total': total_fees,\n        'average': total_fees / len(transfers),\n    }"
+    },
+    {
+      "prompt_id": "tp_002",
+      "prompt": "Review this Node.js Express webhook handler for a school-fees payment provider. Identify any security or correctness issues before it goes to production, and explain how you'd fix each one.\n\napp.post('/webhook/payment', (req, res) => {\n  const { studentId, amount, status } = req.body;\n  const query = `UPDATE fees SET paid = paid + ${amount} WHERE student_id = '${studentId}'`;\n  db.query(query);\n  if (status === 'success') {\n    res.send('ok');\n  }\n});"
+    }
+  ],
+  "model": {
+    "name": "Qwen2.5-Coder-3B-Instruct-Q4_K_M",
+    "runtime": "llama.cpp",
+    "quantization": "GGUF Q4_K_M",
+    "parameters_estimate": "3B",
+    "packaging": "binary_bundle"
+  },
+  "_runtime": {
+    "model_path": "model/qwen2.5-coder-3b-instruct-q4_k_m.gguf"
+  }
+}

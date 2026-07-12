@@ -1,0 +1,173 @@
+# Technical Report — getdebug-edge: Offline AI Code Review for Africa's Laptops
+
+**Team ID:** TODO-register-on-adtf-portal
+**Domain:** coding_assistants
+**Model:** Qwen2.5-Coder-3B-Instruct-Q4_K_M
+
+---
+
+## Problem
+
+Developers and small teams (fintech, health-tech, SME software) across Africa
+need baseline bug and vulnerability review before shipping — but the tools that
+provide it (CodeRabbit-class AI reviewers, hosted SAST) assume reliable
+internet, per-seat budgets, and permission to send source code to a foreign
+cloud. Those three assumptions fail for most of the target users: connectivity
+is intermittent, tooling subscriptions are priced in dollars for teams billing
+in cedis and naira, and data-residency rules in banking and health often
+prohibit code leaving the premises at all.
+
+getdebug-edge delivers the same "flag bugs, explain them, suggest fixes"
+workflow **free, offline, and private** on the $150–$500 laptops developers
+here actually own: a security-weighted AI code reviewer that works in a
+village, during an outage, and inside compliance rules. The target user is a
+solo developer or small team in an eligible African country who wants a
+pre-commit safety net without a cloud bill or a data-residency problem — the
+mobile-money and school-fees scenarios in our test prompts are their daily
+reality.
+
+Running locally is not a preference here; it is the difference between the
+tool existing for this user and not existing.
+
+---
+
+## Design Decisions
+
+- **Base model:** Qwen2.5-Coder-3B-Instruct — the strongest open code-review
+  model in its size class in our head-to-head testing (see below).
+- **Quantization:** GGUF Q4_K_M (~2.1 GB) — the standard quality/memory
+  balance point; leaves >3 GB of headroom under the 7 GB budget with the
+  whole agent running.
+- **Alternatives considered and rejected** (all measured, not guessed — full
+  data in [`BAKEOFF.md`](./BAKEOFF.md) and [`bakeoff_results.json`](./bakeoff_results.json)):
+  - *Qwen2.5-Coder-1.5B*: doubles speed (18.2 vs 9.6 t/s), halves RAM — but
+    answered "NO_ISSUES" to code containing a blatant SQL injection. Accuracy
+    is 50% of the score; rejected.
+  - *Qwen3-4B-Instruct*: tightest prose, caught all seeded bugs, but 20%
+    slower and ~1 GB more RAM with no added recall; rejected on value.
+  - *Llama-3.2-3B*: the only small model with coherent Swahili (relevant to
+    the African-language multiplier), but on a 765-line real-repo test it
+    fabricated a high-severity SQL injection in a file containing no SQL, and
+    the hallucination survived a precision-mandated prompt. A security tool
+    that invents vulnerabilities was disqualifying; rejected.
+  - *Gemma-3-4B*: missed the seeded division-by-zero, slowest of the accurate
+    group, language coverage no better in practice (its Yoruba probe drifted
+    into Indonesian, its Amharic probe came back in Thai); rejected.
+  - *DeepSeek-Coder-1.3B / GLM-Edge-4B*: produced zero findings / no
+    advantage on any measured axis; rejected.
+- **Tools used and why:**
+  - *llama.cpp / llama-server* (contest-mandated runtime): the model loads
+    **once** into a persistent server; every chunk is a localhost HTTP call.
+    The alternative (spawning `llama-cli` per chunk) reloads 2 GB from disk
+    per call — measured as the single biggest throughput/thermal hazard.
+  - *Python 3 standard library only* for the agent: zero dependencies to
+    install on the target laptop.
+  - *Local linters as model context*: the agent runs whatever is available
+    (`ruff` → `pyflakes` → `py_compile`; `node --check`) and feeds trimmed
+    output to the model as hints to verify — measurably improved recall on
+    unvalidated-input findings. Degrades gracefully to nothing installed.
+  - *adtc-profiler* for pre-submission self-checks against the official
+    metrics.
+- **Key engineering decisions from testing:**
+  - *Chat template correctness*: all prompts go through `/v1/chat/completions`
+    so llama-server applies the model's own ChatML template — bypassing it
+    measurably degrades instruct-model output.
+  - *Deterministic decoding* (temperature 0 + repeat penalty 1.1): identical
+    input must produce an identical report; at temp 0.2 the same chunk
+    alternated output formats between runs and one format evaded parsing.
+  - *Analyze-first prompting*: terse "respond in format X or say NO_ISSUES"
+    prompts made the 3B model take the escape hatch and miss a SQL injection;
+    letting it reason briefly before the findings list recovered full recall.
+  - *Findings parsed from severity lines, never a sentinel*: the model
+    sometimes appends "NO_ISSUES" after a valid findings list.
+
+---
+
+## Constraints
+
+- **Target hardware:** ADTC Standard Laptop — 8 GB RAM (7 GB evaluation
+  ceiling), Intel i5 10th–12th gen / Ryzen 5 3000–5000, integrated graphics
+  only, Ubuntu 22.04.
+- **No GPU acceleration** — pure CPU inference via llama.cpp
+  (`--n-gpu-layers 0` explicit); context capped at 3072 tokens and KV cache
+  quantized to q8_0 (with flash attention, required for quantized V-cache) to
+  bound memory.
+- **Compute/thermal:** threads default to **physical cores, not logical
+  CPUs** — measured on an 8c/16t machine: 15 threads gave 14.7 t/s at 98.7°C
+  with throttling to 56% CPU speed; 8 threads gave 18.2 t/s at 68.8°C with no
+  throttling. Memory-bandwidth-bound generation means SMT threads add heat,
+  not speed. An optional inter-chunk pause guards long runs.
+- **Connectivity:** assumed absent. One-time model download
+  (`download_model.sh`); after that, zero network calls — the review loop is
+  entirely localhost. This also serves users whose constraint is policy
+  (data residency) rather than infrastructure.
+- **Power:** the tool tolerates interruption (per-file processing, report
+  written at the end from accumulated state) and the physical-core threading
+  choice reduces sustained power draw versus saturating all logical cores —
+  relevant on battery during outages, common in the target environment.
+- **Data:** no training or fine-tuning data required; the model runs as
+  released, so there is no dataset-collection burden on the user.
+
+---
+
+## Benchmarks
+
+| Metric | Value |
+|---|---|
+| Machine | Intel i9-9980HK (8c/16t), 64 GB RAM, macOS (development machine — faster than the ADTC reference; treat as upper bound) |
+| RAM at peak | 3.59 GB (full agent run incl. llama-server; adtc-profiler concurs: 3.59 GB) |
+| Time to first token | 6.1 s (512-token prompt, CPU prompt processing) |
+| Generation speed | 9.6 t/s (llama-bench, 8 threads) / 12.8 t/s (adtc-profiler) |
+| Thermal throttling | None observed at physical-core threading (71.6°C peak; forcing 15 threads throttled — see Constraints) |
+
+These are self-reported development benchmarks (llama.cpp b9960,
+adtc-profiler 0.1.0, 2026-07-11). Official scores are measured by the ADTC
+profiler on the standard evaluation machine; re-measurement on
+reference-class Ubuntu hardware is planned before submission.
+
+**Accuracy spot-check** (seeded buggy fintech sample: SQL injection, missing
+empty-list guard, input-validation gaps): the model caught all seeded issues
+deterministically (two identical runs), including correct parameterized-query
+and guard-clause fixes. On a 765-line real-world API (payments, sessions,
+security plugins), it stayed appropriately silent on 11 of 12 clean files and
+raised substantive validation findings on the payment-provider integration.
+Both contest `test_prompts` were verified to produce correct, complete
+answers from the submitted model.
+
+---
+
+## Screenshots
+
+<!-- TODO before submission (shot list in SUBMISSION.md): terminal run,
+findings.json with a real SQL-injection finding, VS Code Problems-panel
+integration, adtc-profiler output, bench.sh comparison table. -->
+
+---
+
+## Known Limitations
+
+- Chunking is token-budgeted but line-boundary-based; tree-sitter AST
+  chunking is future work.
+- Findings parsing is regex-based, tuned for recall over precision.
+- The base model's license (qwen-research on the 3B GGUF; the 1.5B sibling is
+  Apache 2.0) is being re-verified before final submission.
+- `--lang` (finding explanations in other languages) ships as an honest
+  product feature; quality varies by language and the African Language
+  multiplier is deliberately **not** claimed — our probes showed only
+  Swahili-via-Llama was credible at this model size, and that model failed
+  our accuracy bar (see `BAKEOFF.md`).
+- Benchmarks above are from a development machine faster than the reference
+  laptop; reference-hardware numbers to follow.
+
+---
+
+## Attribution
+
+- Base model: Qwen2.5-Coder-3B-Instruct (Qwen team, Alibaba Cloud) — official
+  GGUF quantization, hosted on Hugging Face
+- Inference runtime: [llama.cpp](https://github.com/ggml-org/llama.cpp) (ggml.ai)
+- Self-check tooling: [adtc-profiler](https://github.com/Africa-Deep-Tech-Foundation/adtc-profiler)
+  (Africa Deep Tech Foundation)
+- Optional linters surfaced to the model: ruff / pyflakes / Node.js `--check`
+- All agent code (`agent/`, `skills/`, scripts) is original work, GPL-3.0
+  licensed (see `LICENSE`)

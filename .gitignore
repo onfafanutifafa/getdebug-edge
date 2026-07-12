@@ -1,0 +1,17 @@
+# Model weights — downloaded fresh via download_model.sh, never committed
+*.gguf
+model/*.gguf
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Profiler output (local runs)
+submission.json
+audit.json
+verdict.json
+
+# OS
+.DS_Store
