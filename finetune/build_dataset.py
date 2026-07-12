@@ -8,7 +8,9 @@ fine-tune: the training prompt must be byte-identical in shape to what
 production. So we import the real `build_system_prompt` / `build_review_prompt`
 from the agent rather than re-typing the templates here.
 
-Input:  finetune/data/seed.jsonl   (one {lang, code, completion} per line)
+Input:  finetune/data/*.jsonl (except train.jsonl) — each line {lang, code, completion}
+        (seed.jsonl is hand-authored; expanded.jsonl comes from curated.py;
+        add your own distilled_*.jsonl files and they are picked up automatically)
 Output: finetune/data/train.jsonl  (one {messages:[system,user,assistant]} per line)
 
 Each row becomes a 3-message ChatML conversation. The assistant turn is the
@@ -26,19 +28,34 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "agent"))
 from prompts import build_review_prompt, build_system_prompt  # noqa: E402
 
-SEED = ROOT / "finetune" / "data" / "seed.jsonl"
-OUT = ROOT / "finetune" / "data" / "train.jsonl"
+DATA_DIR = ROOT / "finetune" / "data"
+OUT = DATA_DIR / "train.jsonl"
 SKILL = (ROOT / "skills" / "SKILL.md").read_text()
+
+
+def load_examples() -> list[dict]:
+    """Read every *.jsonl in data/ (except the output) and de-dup by code."""
+    seen, examples = set(), []
+    for src in sorted(DATA_DIR.glob("*.jsonl")):
+        if src.name == OUT.name:
+            continue
+        for line in src.read_text().splitlines():
+            line = line.strip()
+            if not line:
+                continue
+            rec = json.loads(line)
+            code = rec["code"]
+            if code in seen:
+                continue
+            seen.add(code)
+            examples.append(rec)
+    return examples
 
 
 def main() -> None:
     system = build_system_prompt(SKILL)
     rows = []
-    for lineno, line in enumerate(SEED.read_text().splitlines(), 1):
-        line = line.strip()
-        if not line:
-            continue
-        rec = json.loads(line)
+    for rec in load_examples():
         code, completion = rec["code"], rec["completion"].strip()
         # Single-file review: chunk 1/1, no linter section (kept simple and
         # deterministic; the linter hint is optional context at inference).
