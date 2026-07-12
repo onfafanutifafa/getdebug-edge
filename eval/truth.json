@@ -36,7 +36,65 @@
         "off_by_one": "off[- ]by[- ]one|<=\\s*numbers\\.length|undefined (element|index)|out of bounds|i < numbers\\.length"
       }
     },
+    "jwt_auth.py": {
+      "clean": false,
+      "bugs": {
+        "hardcoded_jwt_secret": "hard-?coded.*(secret|key)|JWT_SECRET.*(source|code|expos|env)|secret.*(environment|env var|secrets? (store|manager))",
+        "no_expiry_verification": "expir|no exp|verify_exp|token (never|does not) expire|lifetime|ttl"
+      }
+    },
+    "crypto_store.py": {
+      "clean": false,
+      "bugs": {
+        "ecb_mode": "ECB|electronic codebook|insecure (mode|cipher)|GCM|CBC|authenticated encryption",
+        "hardcoded_key": "hard-?coded (key|secret)|static key|fixed key|key is fixed|predictab|KEY.*(source|code|env|derive)"
+      }
+    },
+    "order_api.js": {
+      "clean": false,
+      "bugs": {
+        "idor": "IDOR|insecure direct object|ownership|authoriz|belongs to (the )?(user|owner)|access control"
+      }
+    },
+    "login.py": {
+      "clean": false,
+      "bugs": {
+        "password_logging": "log(ging|s)? (the )?(password|credential|plaintext)|password.*log|sensitive.*log|do not log",
+        "plaintext_compare": "plaintext (password|comparison)|hash.*password|store.*hash|compare.*hash|timing"
+      }
+    },
+    "redirect.js": {
+      "clean": false,
+      "bugs": {
+        "open_redirect": "open redirect|unvalidated redirect|allowlist|whitelist|redirect.*(validat|arbitrary|external)"
+      }
+    },
+    "xml_loader.py": {
+      "clean": false,
+      "bugs": {
+        "xxe": "XXE|XML external entit|entity expansion|resolve_entities|billion laughs|no_network|defusedxml"
+      }
+    },
+    "token.js": {
+      "clean": false,
+      "bugs": {
+        "weak_random": "Math\\.random|predictable|non-crypto|not cryptographic|crypto\\.randomBytes|insecure random|guessable"
+      }
+    },
+    "inventory.py": {
+      "clean": false,
+      "bugs": {
+        "missing_qty_check": "insufficient|negative (stock|balance|inventory)|qty.*(check|validat)|stock\\[sku\\] >= qty|oversell",
+        "off_by_one_loop": "off[- ]by[- ]one|range\\(len|index (out of|error)|items\\[i\\]|IndexError|\\+ 1"
+      }
+    },
     "geo_utils.py": { "clean": true, "bugs": {} },
-    "currency.js": { "clean": true, "bugs": {} }
+    "currency.js": { "clean": true, "bugs": {} },
+    "temp_convert.py": { "clean": true, "bugs": {} },
+    "money_decimal.py": { "clean": true, "bugs": {} },
+    "retry_backoff.js": { "clean": true, "bugs": {} },
+    "safe_slice.py": { "clean": true, "bugs": {} },
+    "bcrypt_hash.py": { "clean": true, "bugs": {} },
+    "slugify.js": { "clean": true, "bugs": {} }
   }
 }

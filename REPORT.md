@@ -82,12 +82,12 @@ tool existing for this user and not existing.
     sometimes appends "NO_ISSUES" after a valid findings list.
 - **Fine-tuning: attempted, measured, and rejected** (full data in
   [`finetune/RESULTS.md`](./finetune/RESULTS.md)). We did not assume a LoRA
-  fine-tune would help — we built a seeded-bug eval harness (`eval/`: 10
-  planted bugs across 5 files + 2 clean controls) and tested it. Two LoRA
-  runs on a free Colab T4, each scored on the identical harness against the
-  base model's **8/10 recall**:
+  fine-tune would help — we built a seeded-bug eval harness and tested it.
+  Two LoRA runs on a free Colab T4, each scored on the **original 10-bug
+  corpus** (this comparison predates the 22-bug expansion above; all three
+  configs ran on the same 10-bug set, so the comparison is internally valid):
 
-  | Configuration | Recall | False positives | 
+  | Configuration | Recall (10-bug corpus) | False positives | 
   |---|---|---|
   | Base model (prompt + skill + linter) | **8/10** | 3 |
   | LoRA, 50 hand-authored examples | 5/10 | 2 |
@@ -161,37 +161,51 @@ surfaced the 3B model's precision ceiling — it over-flagged correctly
 parameterized queries as injection — which is why the tool is positioned as a
 first-pass triage, not an authoritative gate.
 
-### Measured accuracy — false negatives and false positives, stated plainly
+### Measured accuracy — reported honestly, with the sample caveat
 
-We hold a small internal benchmark (`eval/`, 10 seeded bugs across 5 files + 2
-clean control files) and score the shipping model on it deterministically.
-These are honest, self-reported numbers on a **small sample** — not a large
-third-party benchmark — and we publish both sides rather than only the recall:
+We hold an internal benchmark (`eval/`) and score the shipping model
+deterministically. We first measured on 10 seeded bugs and saw 80% recall — but
+that sample was too small to trust (one miss moves the number 10 points). So we
+**expanded it to 22 seeded bugs across 13 files + 8 clean control files** and
+re-measured. The honest result is lower, and we report it:
 
-| Metric | Value | Detail |
-|---|---|---|
-| **Detection rate (recall)** | **80%** | 8 of 10 seeded bugs caught |
-| **False-negative rate** | **20%** | 2 of 10 missed: a weak-hash (MD5-for-password) case and one unchecked-error case |
-| **False positives (clean controls)** | **3** across 2 clean files | all 3 on one pure-math file (Haversine), which has no external input |
-| Determinism | 100% | identical input → identical report (temp 0 + repeat penalty) |
-| Contest `test_prompts` | both correct | verified complete, correct answers from the shipping model |
+| Metric | Value |
+|---|---|
+| **Detection rate (recall)** | **15/22 = 68%** (Wilson 95% CI: **47–84%**) |
+| **False-negative rate** | **32%** |
+| **False positives** | **5** across 8 clean control files |
+| Determinism | 100% (identical input → identical report) |
+| Contest `test_prompts` | both correct, verified |
 
-Beyond the seeded set, the real-repo case study (the Flask tutorial app, see
-`REFERENCE_BENCHMARK.md`) exposed the same tendency on well-written code: the
-model **over-flags**, reporting two `[high]` SQL-injection findings on queries
-that were correctly parameterized and therefore safe.
+Note the honesty point directly: **expanding the sample dropped the number from
+80% to 68%** — the small sample flattered the tool. Even at n=22 the confidence
+interval is wide (47–84%); this is a small internal benchmark, not a large
+third-party one, and we present it as such.
 
-**The honest characterization: the model errs toward flagging.** It rarely
-misses a blatant bug (high recall), but it produces false positives on clean
-and idiomatic code — most often on code with no external input, or on safe
-patterns (parameterized queries) it misreads as unsafe. The 20% false-negative
-rate skews toward subtler classes (weak cryptography, some error-handling
-gaps), which is why the `SKILL.md` methodology names those categories
-explicitly. This precision ceiling is inherent to a 3B model and is the
-central reason getdebug-edge is positioned as a **first-pass triage that
-directs a human's attention**, not an authoritative gate that auto-approves or
-auto-rejects. A reviewer must confirm each finding — but the tool reliably
-points them at the code worth confirming.
+**Where it fails — the 32% misses cluster in identifiable classes:** hardcoded
+secrets (a JWT secret in source), access control (IDOR — no ownership check),
+secret-logging (passwords written to logs), weak crypto (MD5), and some
+validation gaps. These are *configuration- and design-level* issues; the model
+is meaningfully stronger on the "classic" bugs (SQL/command injection, path
+traversal, division-by-zero, off-by-one) than on authz / secrets / logging.
+
+**False positives** appeared on 5 genuinely clean snippets — including a
+correct `Decimal`-based money function and a bounds-checked slice — and on a
+real Flask app it misread parameterized queries as injection. So the model both
+*misses* a class of real bugs and *over-flags* some safe code.
+
+**Measurement caveat:** ground truth is regex-matched against the model's prose,
+which adds noise in both directions — we found and corrected one case where the
+model caught a bug but phrased it differently than our matcher expected. Treat
+these as indicative, not exact.
+
+**Bottom line: roughly two in three seeded bugs caught, a real false-positive
+rate, and identifiable blind spots in secrets, access control, and logging.**
+This is exactly why getdebug-edge is positioned as a **first-pass triage that
+directs a human's attention — explicitly not an authoritative gate** that
+auto-approves or rejects. The blind spots also set the roadmap: the `SKILL.md`
+methodology now names secrets/authz/logging, and closing those gaps is the
+clearest future-work target.
 
 ---
 

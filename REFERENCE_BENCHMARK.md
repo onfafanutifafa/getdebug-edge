@@ -49,7 +49,7 @@ The remaining findings (missing explicit error handling, no input-validation
 guards) were generic and debatable rather than wrong.
 
 **What this tells us honestly:** the 3B model errs toward *flagging* — high
-recall on genuinely buggy code (8/10 on the seeded eval), but a real
+recall on genuinely buggy code (~68%, 15/22 on the expanded seeded eval), but a real
 false-positive rate on well-written code (consistent with the clean-file FPs in
 `eval/`). That is the precision ceiling of a 3B model, and it is why
 getdebug-edge is positioned as a **first-pass triage that surfaces areas for
