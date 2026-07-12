@@ -1,0 +1,69 @@
+{
+  "model": "getdebug-edge-3b-batch1-baked.gguf",
+  "files": {
+    "db_reports.py": {
+      "findings": 0,
+      "caught": {
+        "sql_injection": false,
+        "empty_list_crash": false
+      },
+      "false_positives": 0,
+      "response_excerpt": "This chunk defines two functions for database queries and score ranking.\n\nNO_ISSUES"
+    },
+    "backup_tool.py": {
+      "findings": 0,
+      "caught": {
+        "command_injection": false,
+        "hardcoded_secret": true
+      },
+      "false_positives": 0,
+      "response_excerpt": "This code defines a backup function that uses the `pg_dump` command to create a SQL dump of a database and a charge function that uses a secret API key from an environment variable.\n\nNO_ISSUES"
+    },
+    "upload_handler.js": {
+      "findings": 0,
+      "caught": {
+        "path_traversal": false,
+        "unhandled_error": false
+      },
+      "false_positives": 0,
+      "response_excerpt": "This code reads a file from the server's filesystem and sends it back to the client.\n\nNO_ISSUES"
+    },
+    "wallet.py": {
+      "findings": 0,
+      "caught": {
+        "weak_hash": false,
+        "negative_percent": false,
+        "empty_people_crash": false
+      },
+      "false_positives": 0,
+      "response_excerpt": "This module defines functions for handling wallet operations such as pin hashing and bill splitting.\n\nNO_ISSUES"
+    },
+    "sms_notify.js": {
+      "findings": 0,
+      "caught": {
+        "off_by_one": false
+      },
+      "false_positives": 0,
+      "response_excerpt": "This code sends bulk SMS messages to phone numbers.\n\nNO_ISSUES"
+    },
+    "geo_utils.py": {
+      "findings": 1,
+      "caught": {},
+      "false_positives": 1,
+      "response_excerpt": "This module provides a function to calculate the distance between two points on Earth using the Haversine formula.\n\n- [high] Missing input validation for latitude and longitude (line ~1) \u2014 fix: check that each value is within the expected range (-90 to 90 for latitude, -180 to 180 for longitude)."
+    },
+    "currency.js": {
+      "findings": 0,
+      "caught": {},
+      "false_positives": 0,
+      "response_excerpt": "This code converts an amount from a given currency to Ghanaian Cedis (GHS). It uses a fixed exchange rate table and rounds the result to two decimal places.\n\nNO_ISSUES"
+    }
+  },
+  "summary": {
+    "recall": 0.1,
+    "bugs_caught": 1,
+    "bugs_total": 10,
+    "false_positives_on_clean": 1,
+    "seconds": 57.7
+  }
+}

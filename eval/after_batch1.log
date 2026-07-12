@@ -1,0 +1,9 @@
+  db_reports.py: 0 findings, caught=[], fp=0
+  backup_tool.py: 0 findings, caught=['hardcoded_secret'], fp=0
+  upload_handler.js: 0 findings, caught=[], fp=0
+  wallet.py: 0 findings, caught=[], fp=0
+  sms_notify.js: 0 findings, caught=[], fp=0
+  geo_utils.py: 1 findings, caught=[], fp=1
+  currency.js: 0 findings, caught=[], fp=0
+
+Recall 1/10 = 0.1, FPs on clean files: 1, 57.7s -> eval/after_batch1.json
