@@ -126,3 +126,11 @@ happens commercially with its cloud sibling. Prize support from this
 competition goes toward keeping it maintained, benchmarked on real budget
 hardware, and extended to more African languages (see `SCOPE.md` §7b for the
 Khaya AI roadmap).
+
+## License
+
+getdebug-edge is licensed under the **GNU General Public License v3.0** (see
+[`LICENSE`](./LICENSE)). GPL-3.0 is a copyleft license: you are free to use,
+study, run, and modify this code — but any distributed derivative work must
+also be released under GPL-3.0 with source. In short, it stays free and open
+for everyone; it cannot be taken closed-source.
