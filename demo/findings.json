@@ -1,0 +1,25 @@
+{
+  "target": "demo",
+  "model": "/Users/nutifafa/Node/getdebug-edge/model/getdebug-edge-3b-q4_k_m.gguf",
+  "files_scanned": 1,
+  "chunks_reviewed": 1,
+  "findings": [
+    {
+      "file": "momo_payment.py",
+      "chunk_index": -1,
+      "findings": [
+        "- [high] Hardcoded secret in source (Stripe live secret key) (line ~4) \u2014 fix: move to an environment variable or secrets manager and rotate the exposed value"
+      ],
+      "raw_response": "[deterministic detectors]"
+    },
+    {
+      "file": "momo_payment.py",
+      "chunk_index": 0,
+      "findings": [
+        "- [high] SQL Injection (line ~3) \u2014 fix: Use parameterized queries or safe APIs to prevent SQL injection.",
+        "- [medium] Edge Case Handling (line ~10) \u2014 fix: Add a check for an empty list before calculating the average."
+      ],
+      "raw_response": "### File Overview and Potential Issues\n\nThe `momo_payment.py` file contains functions to handle payments for a Ghanaian mobile-money savings app using SQLite as the database. The `record_payment` function updates the student's fee record by adding the payment amount, while the `average_fee` function calculates the average of a list of transfer fees.\n\n### Potential Issues\n\n1. **SQL Injection**: The `record_payment` function uses string concatenation to build an SQL query from external input (`student_id` and `amount`). This can lead to SQL injection if not properly sanitized.\n2. **Edge Cases**: The `average_fee` function does not handle the case where the list of transfers is empty, which would cause a division by zero error.\n\n### Findings\n\n- [high] SQL Injection (line ~3) \u2014 fix: Use parameterized queries or safe APIs to prevent SQL injection.\n- [medium] Edge Case Handling (line ~10) \u2014 fix: Add a check for an empty list before calculating the average."
+    }
+  ]
+}
