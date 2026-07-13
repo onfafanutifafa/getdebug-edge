@@ -25,17 +25,27 @@ contest-required technical writeup (fill in once benchmarks are run).
 
 ## Status
 
-Scaffold only — not yet functional end-to-end. This repo currently contains:
+**Working end-to-end and measured.** Verified on Ubuntu 22.04 in a container
+pinned to the contest spec (4 CPUs, 8 GB RAM, swap disabled): a full review
+runs at ~3.5 GB peak RAM with no OOM and no crash. Measured hybrid recall is
+**82%** on an internal seeded-bug benchmark (see [`REPORT.md`](./REPORT.md) for
+the honest accuracy characterization, including false-positive/negative rates,
+and [`BAKEOFF.md`](./BAKEOFF.md) for the six-model comparison).
 
-- `metadata.json` — contest submission metadata (placeholders need filling in:
-  `team_id`, `submitter.github_handle`, final `test_prompts`)
-- `download_model.sh` — downloads the Qwen2.5-Coder-3B-Instruct Q4_K_M GGUF weights
-- `agent/agent.py` — starter CLI: launches a persistent `llama-server`, chunks a
-  target repo by token budget, sends each chunk through the model's chat
-  template via `/v1/chat/completions`, aggregates findings into a report, shuts
-  the server down on exit; also has a `--prompt` one-shot mode for demos
-- `bench.sh` — llama-bench comparison across every downloaded quant/model size
-- `REPORT.md` — skeleton for the required contest writeup
+Key components:
+- `agent/agent.py` — the agent: launches a persistent `llama-server`, chunks a
+  target repo by token budget, reviews each chunk through the model's chat
+  template, runs deterministic detectors + local linters, caches results, and
+  aggregates findings; `--prompt` one-shot mode for demos, `--diagnostics` for
+  VS Code
+- `agent/detectors.py` — deterministic hybrid pass (secrets, weak crypto, logs)
+- `eval/` — seeded-bug benchmark harness and its results
+- `finetune/` — the LoRA pipeline and the measured decision to ship the base
+  model (see [`finetune/RESULTS.md`](./finetune/RESULTS.md))
+- `bench.sh` / `REFERENCE_BENCHMARK.md` — throughput + constraint benchmarks
+
+Remaining before final submission: `team_id` + `github_handle` in
+`metadata.json`, and a true reference-hardware (Intel i5) throughput run.
 
 ## Install llama.cpp
 
