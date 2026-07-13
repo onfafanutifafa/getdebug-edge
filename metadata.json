@@ -1,13 +1,13 @@
 {
-  "team_id": "TODO-register-on-adtf-portal",
+  "team_id": "getdebug-edge",
   "domain": "coding_assistants",
   "language_scope": ["en"],
   "african_alpha_claim": true,
   "budget_laptop_claim": true,
   "submitter": {
-    "name": "fafa",
-    "email": "nutifafadav@gmail.com",
-    "github_handle": "TODO-your-github-handle"
+    "name": "Davis Nutifafa-fafa Agbetsise",
+    "email": "fafa@masenu.com",
+    "github_handle": "onfafanutifafa"
   },
   "cross_disciplinary_pairing": {
     "discipline": "software_security",
