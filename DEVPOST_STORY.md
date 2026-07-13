@@ -31,10 +31,16 @@ Every decision was measured, not assumed:
 
 ## Challenges I ran into
 
-- **Fine-tuning made it *worse* — twice.** Two LoRA runs on a free Colab T4 regressed recall: the first learned terseness, the second overfit to templated data and started answering "no issues" on buggy code. The eval harness caught it, and I made the hard call to **ship the base model, not the fine-tune.**
-- **The thermal trap was counterintuitive** — the "obvious" setting (use all threads) was both slower and hot enough to trigger the contest's throttling penalty.
-- **My own accuracy number was flattering me.** On 10 samples I saw 80% recall; expanding to 22 dropped it to a *truthful* 68%. Rather than hide that, I published it — then closed the gap to 82% with the hybrid detectors.
-- **Small-model false positives are real** — on well-written code it over-flags (it called a correctly parameterized query "SQL injection"). I report the false-positive rate openly.
+- **Fine-tuning made the model *worse* — twice.** Two LoRA runs on a free Colab T4 both regressed accuracy: the first taught it to stop after a single finding (terseness), the second overfit to my templated training data and started answering "no issues" on obviously buggy code.
+- **The obvious performance setting was a trap.** Using all CPU threads was *slower* than using fewer, and ran hot enough to trip the contest's thermal-throttling penalty — the exact opposite of intuition.
+- **My accuracy benchmark was too small to trust.** An early 10-sample eval showed a flattering 80% recall; the number moved sharply once the sample was large enough to mean anything, and I had to confront a lower, truer figure.
+- **The 3B model over-flags clean code.** It reported "SQL injection" on queries that were correctly parameterized and safe — the kind of false positive a larger model wouldn't make.
+- **…and it's blind to whole classes of real bugs.** Hardcoded secrets, weak cryptography, access control (IDOR), and secrets written to logs slipped past it — the reasoning-heavy or pattern-specific issues a small model doesn't reliably catch.
+- **The model kept finding ways to misbehave.** Given a terse prompt it took the "no issues" escape hatch and skipped a genuine SQL injection; at nonzero temperature it produced different output formats run-to-run, some of which broke my findings parser; and greedy decoding occasionally sent it into repetition loops.
+- **A fixed network port silently corrupted a run.** The agent assumed port 8080 was free — an unrelated app was already listening there, answered "healthy," and the agent happily "reviewed" code against a server that wasn't even running the model.
+- **A read-only test mount produced phantom findings.** When the target directory was read-only, the bundled linter failed with a filesystem error, and that error text got fed to the model as if it were a lint hint — which it dutifully reported as a bug.
+- **African-language support collapsed beyond Swahili.** Probing Hausa, Yoruba, Amharic, and Twi, the small models degenerated or answered in the wrong language entirely — closing off a language-bonus path I'd hoped to claim honestly.
+- **Getting the model onto constrained hardware was its own fight.** Free Colab sessions recycled mid-work and 2 GB downloads stalled near completion; baking the reviewer persona into the model's chat template broke the server at startup over a single stray apostrophe in the template.
 
 ## Accomplishments that I'm proud of
 
