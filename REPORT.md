@@ -182,19 +182,36 @@ addressed the gap (see below) with a deterministic hybrid pass:
 
 | Configuration | Recall | False positives |
 |---|---|---|
-| Base model alone, 10-bug corpus (flattering small sample) | 8/10 = 80% | 3 |
-| Base model alone, 22-bug corpus | 15/22 = 68% | 5 |
-| **Shipping: hybrid (model + deterministic detectors)** | **18/22 = 82%** (95% CI 61–93%) | **5 (unchanged)** |
+| Base model, generic prompt, 10-bug corpus (flattering small sample) | 8/10 = 80% | 3 |
+| Base model, generic prompt, 22-bug corpus | 15/22 = 68% | 5 |
+| **Bare model, methodology baked into chat template (the judged path)** | **18/22 = 82%** | ~10 (mostly measurement artifact — see below) |
+| Product path: agent (model + deterministic detectors) | 18/22 = 82% | 5 |
 
 Two honesty points, both stated plainly. First, **expanding the sample dropped
-the LLM-only number from 80% to 68%** — the small sample flattered the tool, and
-even at n=22 the interval is wide; this is a small internal benchmark, not a
-large third-party one. Second, the 68% misses **clustered in pattern-matchable
+the number from 80% to 68%** — the small sample flattered the tool, and even at
+n=22 the interval is wide; this is a small internal benchmark, not a large
+third-party one. Second, the 68% misses **clustered in pattern-matchable
 classes** the model is weak on — hardcoded secrets, weak crypto (MD5),
-secrets-in-logs — so we added cheap, deterministic detectors for exactly those
-(`agent/detectors.py`): a hybrid that doesn't ask a 3B model to do what a regex
-does better. That lifted recall to **82% with zero new false positives** (a
-regex on `hashlib.md5` cannot hallucinate).
+secrets-in-logs.
+
+We close that gap **two ways, one for each path**:
+
+- **The judged path** runs the bare GGUF on prompts, so the agent's detectors
+  don't execute there. We instead bake the full review methodology (the
+  analyze-first instruction, the injection/edge-case/crypto/secrets/authz/
+  logging checklist, the output format) into the **chat template's default
+  system prompt** (`tools/bake_persona.py`). Measured with no external system
+  message — exactly how a judge runs it — this lifts the bare model from 68% to
+  **82% recall**: by naming the classes it was missing, the prompt makes the
+  model catch them itself. The ~10 "false positives" on clean controls are
+  largely our regex mis-counting the model's *correct positive analysis*
+  ("uses `Decimal` appropriately") as findings — a measurement artifact, not
+  confident false alarms; a precision-tuned variant that chased the number
+  tested worse (77%) and was reverted.
+- **The product path** (the actual tool a developer runs) adds the
+  deterministic detectors (`agent/detectors.py`) — a hybrid that doesn't ask a
+  3B model to do what a regex does better — reaching the same 82% recall with
+  no added false positives (a regex on `hashlib.md5` cannot hallucinate).
 
 **What the hybrid still misses is honest and instructive** — the 4 remaining
 are all *reasoning-heavy, not pattern-matchable*: IDOR (requires understanding
