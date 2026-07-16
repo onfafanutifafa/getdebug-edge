@@ -67,7 +67,10 @@ from pathlib import Path
 
 import shutil
 
-from prompts import SYSTEM_PROMPT, build_review_prompt, build_system_prompt, extract_findings
+from prompts import (
+    SYSTEM_PROMPT, build_review_prompt, build_system_prompt, extract_findings,
+    build_fix_prompt, extract_code_block,
+)
 from detectors import scan_text
 
 DEFAULT_SKILL_PATH = Path(__file__).resolve().parent.parent / "skills" / "SKILL.md"
@@ -147,6 +150,7 @@ class Finding:
     chunk_index: int
     findings: list[str]
     raw_response: str
+    fix_code: str = ""   # populated only in --fix mode: corrected code for this chunk
 
 
 @dataclass
@@ -441,7 +445,8 @@ class LlamaServer:
 
 def review_repo(target: Path, server: LlamaServer, char_budget: int, verbose: bool = False,
                 system: str = SYSTEM_PROMPT, lint: bool = True,
-                cache: ResultCache | None = None, spec: str = "") -> ReviewReport:
+                cache: ResultCache | None = None, spec: str = "",
+                fix: bool = False) -> ReviewReport:
     report = ReviewReport(target=str(target), model=str(server.model_path))
     files = discover_files(target)
     report.files_scanned = len(files)
@@ -476,9 +481,18 @@ def review_repo(target: Path, server: LlamaServer, char_budget: int, verbose: bo
                 print(f"--- {path} chunk {idx + 1}: {len(found)} finding(s) ---\n{response}\n",
                       file=sys.stderr)
             if found or response.startswith("[agent error"):
+                # --fix: one extra call per flagged chunk to produce corrected
+                # code (opt-in — it roughly doubles inference on flagged files).
+                fix_code = ""
+                if fix and found:
+                    rel = str(path.relative_to(target))
+                    fix_resp = server.complete(
+                        build_fix_prompt(rel, chunk, "\n".join(found)), system=system)
+                    if not fix_resp.startswith("[agent error"):
+                        fix_code = extract_code_block(fix_resp)
                 report.findings.append(
                     Finding(file=str(path.relative_to(target)), chunk_index=idx,
-                            findings=found, raw_response=response)
+                            findings=found, raw_response=response, fix_code=fix_code)
                 )
             # Thermal pacing only matters after real inference — cache hits
             # cost no compute, so don't sleep on them.
@@ -512,6 +526,10 @@ def main() -> None:
                              "model checks the code against it, surfacing business-logic bugs "
                              "(wrong amounts, missing guards, access-control gaps) that generic "
                              "review misses. If omitted, a SPEC.md at the target root is used.")
+    parser.add_argument("--fix", action="store_true",
+                        help="For each flagged chunk, also generate corrected code (CodeRabbit-"
+                             "style suggested change) into the report's fix_code field. Opt-in: "
+                             "roughly doubles inference on files with findings.")
     args = parser.parse_args()
 
     if not args.target and not args.prompt:
@@ -541,7 +559,8 @@ def main() -> None:
         budget = chars_per_chunk(args.ctx_size)
         cache = ResultCache(args.model.name, system, enabled=not args.no_cache)
         report = review_repo(args.target, server, budget, verbose=args.verbose,
-                             system=system, lint=not args.no_lint, cache=cache, spec=spec_text)
+                             system=system, lint=not args.no_lint, cache=cache, spec=spec_text,
+                             fix=args.fix)
         cache.save()
     finally:
         server.stop()

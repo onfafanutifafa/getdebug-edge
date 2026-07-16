@@ -88,6 +88,32 @@ sentences). Then list your findings, one line each:
 If your analysis finds no real issues, write NO_ISSUES instead of a findings list."""
 
 
+def build_fix_prompt(file_path: str, chunk_text: str, findings_text: str) -> str:
+    """Ask the model to emit corrected code for the issues found in a chunk —
+    CodeRabbit-style suggested changes. Kept as a separate, opt-in call so
+    normal reviews stay fast and scannable."""
+    return f"""This code has the following issues:
+{findings_text}
+
+Rewrite the code to fix ONLY these issues, changing nothing else. Output just \
+the corrected code in a single fenced code block — no prose before or after.
+
+File: {file_path}
+```
+{chunk_text}
+```"""
+
+
+_CODE_BLOCK = re.compile(r"```[a-zA-Z0-9_+-]*\n(.*?)```", re.DOTALL)
+
+
+def extract_code_block(response: str) -> str:
+    """Pull the corrected code out of a fix response (first fenced block),
+    falling back to the whole response if the model omitted the fences."""
+    m = _CODE_BLOCK.search(response)
+    return (m.group(1) if m else response).strip()
+
+
 def extract_findings(response: str) -> list[str]:
     """Return the `- [severity] ...` lines from a model response.
 

@@ -101,6 +101,12 @@ The agent also:
   review can't find, because they're only bugs relative to intent. Measured to
   flip the reasoning-heavy misses (negative-percent, overselling) from missed
   to caught.
+- can **suggest code fixes** (`--fix`): for each flagged chunk it emits
+  corrected code into the report's `fix_code` field (CodeRabbit-style suggested
+  change). Because the base is a *code* model, it also writes code on request
+  via `--prompt` ("write a function that…"). Opt-in — `--fix` roughly doubles
+  inference on files with findings, and the fixes are a starting point to
+  review, not guaranteed-complete at this model size.
 
 The agent starts and stops its own persistent `llama-server` — no separate
 server process to manage, and zero network calls after the model is on disk.

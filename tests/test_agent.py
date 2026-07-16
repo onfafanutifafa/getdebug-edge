@@ -13,7 +13,10 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "agent"))
 
 import agent  # noqa: E402
 from agent import ResultCache, chars_per_chunk, chunk_file, physical_core_count, run_linters  # noqa: E402
-from prompts import build_review_prompt, build_system_prompt, extract_findings  # noqa: E402
+from prompts import (  # noqa: E402
+    build_review_prompt, build_system_prompt, extract_findings,
+    build_fix_prompt, extract_code_block,
+)
 from detectors import scan_text  # noqa: E402
 
 
@@ -89,6 +92,24 @@ class PromptsTest(unittest.TestCase):
         self.assertIn("Linter output", p)
         p2 = build_review_prompt("a.py", "code", 0, 1)
         self.assertNotIn("Linter output", p2)
+
+    def test_spec_section_included_when_present(self):
+        p = build_review_prompt("a.py", "code", 0, 1, spec="X must never be negative")
+        self.assertIn("Intended behavior", p)
+        self.assertIn("X must never be negative", p)
+        self.assertNotIn("Intended behavior", build_review_prompt("a.py", "code", 0, 1))
+
+    def test_fix_prompt_carries_findings_and_code(self):
+        p = build_fix_prompt("a.py", "def f(): pass", "- [high] bug here")
+        self.assertIn("bug here", p)
+        self.assertIn("def f(): pass", p)
+
+    def test_extract_code_block(self):
+        resp = "Here is the fix:\n```python\ndef f():\n    return 1\n```\nDone."
+        self.assertEqual(extract_code_block(resp), "def f():\n    return 1")
+
+    def test_extract_code_block_falls_back_without_fences(self):
+        self.assertEqual(extract_code_block("def f(): return 1"), "def f(): return 1")
 
 
 class ResultCacheTest(unittest.TestCase):
