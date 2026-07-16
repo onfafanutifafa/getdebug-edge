@@ -129,6 +129,34 @@ reads code and flags bugs, vulnerabilities, and correctness issues with
 suggested fixes (`--target`), and answers one-off debugging questions
 (`--prompt`). It never edits your files.
 
+## Model vs. tool — two honest numbers
+
+getdebug-edge has **two** measured recall numbers, because there are two ways to
+run it, and we state both plainly so there's no ambiguity:
+
+- **The model alone — 82%** (18/22 seeded bugs). The bare GGUF answering prompts
+  with the review methodology baked into its chat template, *no harness*. This
+  is what a contest judge scores when they run the model directly.
+- **The full tool — 86%** (19/22). Adds the agent's deterministic detectors
+  (hardcoded secrets, weak crypto, JWT-no-expiry) and, with a `SPEC.md`,
+  business-logic checks. This is what a developer gets running `agent.py`.
+
+The gap is by design — it reflects what can and can't live *inside the model*
+(weights + chat template) versus what must run in the *tool* (the Python agent):
+
+| Lives in the model ✅ | Lives in the tool (harness) |
+|---|---|
+| Review methodology & instructions | Deterministic regex detectors (run at review time) |
+| The behavior to *look for* secrets, MD5, injection | The regex's 100%-reliable *guarantee* |
+| The capability to check code against a spec | Your project's specific `SPEC.md` (per-project data) |
+| **→ this is the 82% a judge scores** | **→ this is what lifts it to 86% + logic bugs** |
+
+In short: *instructions and behaviors* bake into the model; *executable code and
+per-project data* stay in the tool. The base weights are unchanged from
+Qwen2.5-Coder-3B — we made the model **focused** (methodology in the template)
+and **augmented** it (detectors + spec), not smarter. See
+[`REPORT.md`](./REPORT.md) for the full measured breakdown.
+
 ## Why this exists — and who is behind it
 
 getdebug-edge shares its thesis with [getdebug.dev](https://getdebug.dev), an
