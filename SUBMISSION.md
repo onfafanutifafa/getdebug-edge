@@ -105,15 +105,16 @@ VS Code Problems panel, the `adtc-profiler`/8 GB no-OOM result, the
 
 ## Score projection (official formula, TPS_REFERENCE = 15.0 provisional)
 
-`S_total = 0.50·S_acc + 0.30·S_perf + 0.20·S_eff − P_thermal`, with measured
-values: peak RAM 3.59 GB → S_eff = 100×(7−3.59)/7 = **48.7**; P_thermal = **0**
-(no throttle at physical-core threading); S_perf = 100×(TPS/15).
+`S_total = 0.50·S_acc + 0.30·S_perf + 0.20·S_eff − P_thermal`. Shipping quant
+is now **Q3_K_M** (quant sweep in REPORT.md): peak RAM ~2.65 GB → S_eff =
+100×(7−2.65)/7 = **62**; P_thermal = **0**; S_perf = 100×(TPS/15), and Q3's
+generation is ~35% faster than Q4 (14.6 vs 10.8 t/s on the dev machine).
 
 | Scenario | S_acc (est.) | TPS → S_perf | S_eff | S_total |
 |---|---|---|---|---|
-| Dev-machine optimistic | 85 | 12.8 → 85.3 | 48.7 | **77.6** |
-| Central | 75 | 9.6 → 64.0 | 48.7 | **66.4** |
-| Reference-hw conservative | 70 | ~8 → 53.3 | 48.7 | **60.7** |
+| Dev-machine optimistic | 85 | 14.6 → 97 | 62 | **~84** |
+| Central | 78 | 11 → 73 | 62 | **~73** |
+| Reference-hw conservative | 72 | ~9 → 60 | 62 | **~66** |
 
 Plus (per challenge page): Budget Profile multiplier +10% (claimed) and
 African Use Case bonus up to +10 — central case lands ≈ **73–83** after
@@ -123,14 +124,12 @@ i5's DDR4 bandwidth is close to the dev machine's, so the reference-hardware
 TPS drop may be smaller than the core-count difference suggests — verify on
 real hardware.
 
-**Lever analysis:** S_eff is capped by model size (weights are 2.1 GB of the
-3.59 GB peak) — only a smaller model moves it much, and the 1.5B fails
-accuracy. **Q4_0 tested 2026-07-12 and REJECTED**: +10% generation TPS
-(10.54 vs 9.56 t/s, runtime AVX2 repacking) and 90 MB smaller, but it
-regressed on tp_001 — explained the `==` bug backwards and missed the
-division-by-zero entirely, the prompt's headline bug. ~+2 total points were
-not worth degrading a directly-judged S_acc item; Q4_K_M stays. Remaining
-S_acc levers: LoRA fine-tune on the contest's free GPU hours (only lever that
+**Lever analysis:** S_eff was capped by model size — and a smaller quant moved
+it, exactly as predicted. **Q3_K_M switch (2026-07-16)** delivered equal-or-
+better accuracy at 18% smaller / 35% faster / ~1.1 GB less RAM (S_eff 47 → 62,
+~+3 total points), and the importance-matrix quants (IQ4_XS/IQ3_M) were tested
+and rejected (accuracy collapsed). (Earlier: Q4_0 was rejected for regressing
+tp_001; Q4_K_M was superseded by Q3_K_M.) Remaining S_acc levers: LoRA fine-tune on the contest's free GPU hours (only lever that
 reaches the hidden prompts), default system prompt baked into the GGUF chat
 template, seeded-bug eval corpus for measurable prompt tuning.
 
@@ -146,7 +145,7 @@ template, seeded-bug eval corpus for measurable prompt tuning.
       running the bare model in Ollama/llama-cli get the security-reviewer
       behavior; reproducible from public weights via `tools/bake_persona.py`
       (wired into `download_model.sh`); verified live on bare prompts.
-      Submitted model = `model/getdebug-edge-3b-q4_k_m.gguf`
+      Submitted model = `model/getdebug-edge-3b-q3_k_m.gguf`
 - [x] **Seeded-bug eval harness** — `eval/` (2026-07-12): 10 seeded bugs
       across 5 files + 2 clean controls; baseline recall 8/10 with 3 FPs;
       regression gate for all prompt/skill/model changes
@@ -157,6 +156,6 @@ template, seeded-bug eval corpus for measurable prompt tuning.
       `REPORT.md` §2 as the "design alternatives" evidence the rubric asks for
 - [ ] Keep `submission.json` from the final profiler run in the repo
 - [ ] Host/deliver the BAKED weights: judges must be able to obtain
-      `getdebug-edge-3b-q4_k_m.gguf` — either reproduce-by-script (current,
+      `getdebug-edge-3b-q3_k_m.gguf` — either reproduce-by-script (current,
       documented) or upload to a HF repo under the team account once
       registered (needed anyway if the LoRA fine-tune lands)

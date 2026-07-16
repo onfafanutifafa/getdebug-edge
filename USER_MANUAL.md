@@ -59,7 +59,7 @@ cd getdebug-edge
 bash download_model.sh
 ```
 
-The model is about **2.1 GB** — on a slow connection this is the long step.
+The model is about **1.7 GB** — on a slow connection this is the long step.
 It only ever happens once. After this, you can disconnect from the internet
 entirely and everything still works.
 
@@ -172,7 +172,7 @@ OpenAI-compatible API, so extensions like Continue or Cline can use your local
 model. Start the server yourself:
 
 ```bash
-llama-server -m /path/to/getdebug-edge/model/qwen2.5-coder-3b-instruct-q4_k_m.gguf \
+llama-server -m /path/to/getdebug-edge/model/getdebug-edge-3b-q3_k_m.gguf \
   --ctx-size 3072 --flash-attn on --cache-type-k q8_0 --cache-type-v q8_0 \
   --n-gpu-layers 0 --port 8080
 ```

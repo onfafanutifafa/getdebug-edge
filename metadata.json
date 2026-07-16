@@ -25,13 +25,13 @@
     }
   ],
   "model": {
-    "name": "getdebug-edge-3B (Qwen2.5-Coder-3B-Instruct-Q4_K_M, reviewer persona baked into chat template)",
+    "name": "getdebug-edge-3B (Qwen2.5-Coder-3B-Instruct-Q3_K_M, reviewer persona baked into chat template)",
     "runtime": "llama.cpp",
-    "quantization": "GGUF Q4_K_M",
+    "quantization": "GGUF Q3_K_M",
     "parameters_estimate": "3B",
     "packaging": "binary_bundle"
   },
   "_runtime": {
-    "model_path": "model/getdebug-edge-3b-q4_k_m.gguf"
+    "model_path": "model/getdebug-edge-3b-q3_k_m.gguf"
   }
 }

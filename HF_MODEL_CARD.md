@@ -17,14 +17,14 @@ library_name: llama.cpp
 pipeline_tag: text-generation
 ---
 
-# getdebug-edge-3B (Q4_K_M GGUF)
+# getdebug-edge-3B (Q3_K_M GGUF)
 
 **Offline, security-first code review that runs entirely on a commodity CPU laptop.**
 
 This is the model artifact for **getdebug-edge**, an entry in the Africa Deep
 Tech Challenge 2026 (Laptop LLM Challenge). It is
 [Qwen2.5-Coder-3B-Instruct](https://huggingface.co/Qwen/Qwen2.5-Coder-3B-Instruct),
-quantized to 4-bit **Q4_K_M GGUF (~2.1 GB)**, with the getdebug-edge code-review
+quantized to 3-bit **Q3_K_M GGUF (~1.7 GB)**, with the getdebug-edge code-review
 methodology **baked into the chat template's default system prompt** — so when
 you run it bare (no external system message), it behaves as a security-focused
 reviewer: it analyzes code, then reports findings in the format
@@ -39,7 +39,7 @@ Full project, agent, evaluation harness, and technical report:
 
 **llama.cpp:**
 ```bash
-llama-server -m getdebug-edge-3b-q4_k_m.gguf \
+llama-server -m getdebug-edge-3b-q3_k_m.gguf \
   --ctx-size 3072 --flash-attn on \
   --cache-type-k q8_0 --cache-type-v q8_0 \
   --n-gpu-layers 0 --threads $(nproc)   # use physical-core count for best speed+thermals
@@ -49,7 +49,7 @@ llama-server -m getdebug-edge-3b-q4_k_m.gguf \
 
 **Ollama:**
 ```bash
-ollama create getdebug-edge -f Modelfile   # FROM ./getdebug-edge-3b-q4_k_m.gguf
+ollama create getdebug-edge -f Modelfile   # FROM ./getdebug-edge-3b-q3_k_m.gguf
 ollama run getdebug-edge "Review this function for bugs: ..."
 ```
 
@@ -72,7 +72,7 @@ peak RAM, no OOM, no crash.
 ## Base model, quantization, and reproducibility
 
 - **Base:** Qwen2.5-Coder-3B-Instruct (Qwen team, Alibaba Cloud)
-- **Quantization:** GGUF Q4_K_M (official Qwen GGUF weights)
+- **Quantization:** GGUF Q3_K_M (official Qwen GGUF weights)
 - **Modification:** only the chat template's default system prompt is changed
   (the getdebug-edge reviewer methodology). Weights are unchanged. Reproduce
   exactly with `tools/bake_persona.py` in the GitHub repo.

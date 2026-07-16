@@ -147,17 +147,39 @@ tool existing for this user and not existing.
 
 ## Benchmarks
 
-| Metric | Value |
+Shipping quant: **Q3_K_M** (see the quant sweep below).
+
+| Metric | Value (Q3_K_M shipping) |
 |---|---|
 | Machine | Intel i9-9980HK (8c/16t), 64 GB RAM, macOS (development machine — faster than the ADTC reference; treat as upper bound) |
-| RAM at peak | 3.59 GB (full agent run incl. llama-server; adtc-profiler concurs: 3.59 GB) |
-| Time to first token | 6.1 s (512-token prompt, CPU prompt processing) |
-| Generation speed | 9.6 t/s (llama-bench, 8 threads) / 12.8 t/s (adtc-profiler) |
-| Thermal throttling | None observed at physical-core threading (71.6°C peak; forcing 15 threads throttled — see Constraints) |
+| RAM at peak | ~2.65 GB (full run incl. llama-server) → S_eff ≈ 62 |
+| Generation speed | 14.6 t/s (llama-bench, 8 threads) |
+| Thermal throttling | None at physical-core threading (forcing all logical threads throttled — see Constraints) |
 
-These are self-reported development benchmarks (llama.cpp b9960,
-adtc-profiler 0.1.0, 2026-07-11). Official scores are measured by the ADTC
-profiler on the standard evaluation machine.
+### Quantization sweep — why Q3_K_M, not Q4_K_M
+
+All four are the same 3B model, compressed differently, measured on the same
+machine (judged-path recall, bare model, no detectors):
+
+| Quant | Size | Recall | Gen TPS | Peak RAM | S_eff |
+|---|---|---|---|---|---|
+| Q4_K_M (was shipping) | 2.10 GB | 18/22 = 82% | 10.8 | 3.83 GB | 47 |
+| **Q3_K_M (shipping)** | **1.72 GB** | **19/22 = 86%*** | **14.6** | **2.65 GB** | **62** |
+| IQ4_XS | 1.74 GB | 14/22 = 64% | 12.4 | 2.16 GB | 70 |
+| IQ3_M | 1.49 GB | 12/22 = 55% | 6.7 | 2.01 GB | 71 |
+
+**Q3_K_M dominates Q4_K_M on every axis** — 18% smaller, 35% faster, ~1.1 GB
+less RAM (S_eff 47 → 62, worth ~+3 total points), at equal-or-better accuracy.
+(*The 86% vs 82% is within noise at n=22; we claim only "at least as good" —
+and it answered both contest test prompts correctly, catching the headline
+bug in each.) The importance-matrix quants (IQ4_XS, IQ3_M) unexpectedly
+collapsed (64%/55% with false-positive storms) and were rejected. Q3_K_M is
+also the better fit for the accessibility goal: a smaller download on metered
+data, and it runs in ~2.6 GB — comfortable on a 4 GB machine.
+
+Earlier development benchmarks were on Q4_K_M (llama.cpp b9960, adtc-profiler
+0.1.0). Official scores are measured by the ADTC profiler on the standard
+evaluation machine.
 
 **Reference-constraint run** (2026-07-12, full detail in
 [`REFERENCE_BENCHMARK.md`](./REFERENCE_BENCHMARK.md)): the agent was also run

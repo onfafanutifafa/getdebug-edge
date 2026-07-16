@@ -13,7 +13,10 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 MODEL_DIR="$SCRIPT_DIR/model"
 HF_BASE="https://huggingface.co"
 
-MODEL_3B_FILE="qwen2.5-coder-3b-instruct-q4_k_m.gguf"
+# Q3_K_M is the shipping quant — chosen over Q4_K_M after a measured quant
+# sweep (REPORT.md): equal-or-better accuracy at ~18% smaller, ~35% faster,
+# ~1.1 GB less RAM, and more accessible on low-RAM / metered-data hardware.
+MODEL_3B_FILE="qwen2.5-coder-3b-instruct-q3_k_m.gguf"
 MODEL_3B_URL="$HF_BASE/Qwen/Qwen2.5-Coder-3B-Instruct-GGUF/resolve/main/$MODEL_3B_FILE"
 MODEL_15B_FILE="qwen2.5-coder-1.5b-instruct-q4_k_m.gguf"
 MODEL_15B_URL="$HF_BASE/Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF/resolve/main/$MODEL_15B_FILE"
@@ -38,7 +41,7 @@ bake() {
   # model behaves as a code reviewer even when run bare (Ollama/llama-cli
   # with no system prompt). Reproducible from public weights — see
   # tools/bake_persona.py. Skipped gracefully if the gguf package is absent.
-  local src="$MODEL_DIR/$MODEL_3B_FILE" dst="$MODEL_DIR/getdebug-edge-3b-q4_k_m.gguf"
+  local src="$MODEL_DIR/$MODEL_3B_FILE" dst="$MODEL_DIR/getdebug-edge-3b-q3_k_m.gguf"
   [ -f "$dst" ] && { echo "Baked model already present at $dst — skipping."; return 0; }
   if python3 -c "import gguf" 2>/dev/null; then
     python3 "$SCRIPT_DIR/tools/bake_persona.py" "$src" "$dst"
@@ -48,10 +51,10 @@ bake() {
 }
 
 case "${1:-3b}" in
-  3b)   fetch "$MODEL_3B_FILE" "$MODEL_3B_URL" "Qwen2.5-Coder-3B-Instruct (Q4_K_M, ~2.1 GB)" && bake ;;
+  3b)   fetch "$MODEL_3B_FILE" "$MODEL_3B_URL" "Qwen2.5-Coder-3B-Instruct (Q3_K_M, ~1.7 GB)" && bake ;;
   1.5b) fetch "$MODEL_15B_FILE" "$MODEL_15B_URL" "Qwen2.5-Coder-1.5B-Instruct (Q4_K_M, ~1.0 GB)" ;;
   all)
-    fetch "$MODEL_3B_FILE" "$MODEL_3B_URL" "Qwen2.5-Coder-3B-Instruct (Q4_K_M, ~2.1 GB)"
+    fetch "$MODEL_3B_FILE" "$MODEL_3B_URL" "Qwen2.5-Coder-3B-Instruct (Q3_K_M, ~1.7 GB)"
     fetch "$MODEL_15B_FILE" "$MODEL_15B_URL" "Qwen2.5-Coder-1.5B-Instruct (Q4_K_M, ~1.0 GB)"
     ;;
   *) echo "Usage: bash download_model.sh [3b|1.5b|all]" >&2; exit 1 ;;
