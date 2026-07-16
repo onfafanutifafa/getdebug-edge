@@ -102,6 +102,35 @@ English. Quality varies by language — French and Swahili work reasonably;
 smaller African languages are limited by the model (see the roadmap in
 `SCOPE.md` for the Khaya AI plan).
 
+### Catch business-logic bugs by describing how the app should work
+
+Some bugs aren't about syntax or security — they're about the code doing the
+*wrong thing*. A discount that accidentally increases a balance, or a "reserve"
+that lets you take more stock than exists, looks perfectly valid to any tool
+that doesn't know what the code is *supposed* to do.
+
+Tell it. Write a short plain-language description of intended behavior in a file
+called **`SPEC.md`** at the root of the project you're reviewing (or pass
+`--spec path/to/spec.md`):
+
+```text
+apply_discount reduces a balance by a percentage between 0 and 100.
+A discount must never increase the balance.
+
+reserve() must never let the reserved quantity exceed available stock.
+
+A user may only retrieve their own orders.
+```
+
+The reviewer then checks your code **against your rules** and flags where they're
+violated. In our testing this surfaced business-logic bugs that were otherwise
+missed — for example, it caught a discount function that mishandled negative
+percentages and a stock check that allowed overselling. It's most effective
+when the spec is specific about limits, ownership, and what must never happen.
+
+*Honest note:* this depends on the quality of your spec, and it's a first-pass
+aid — confirm each finding. It doesn't guarantee every logic bug is caught.
+
 ---
 
 ## Getting the best results (important!)
