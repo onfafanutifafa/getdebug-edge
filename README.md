@@ -158,6 +158,33 @@ Qwen2.5-Coder-3B — we made the model **focused** (methodology in the template)
 and **augmented** it (detectors + spec), not smarter. See
 [`REPORT.md`](./REPORT.md) for the full measured breakdown.
 
+## Scope, languages, and limits (read this)
+
+- **Languages.** The LLM reviews any file in these extensions: `.py .js .ts
+  .jsx .tsx .java .go .rs .c .cpp .h .hpp .cs .rb .php .sql`. The **deterministic
+  detectors** (secrets, weak crypto, JWT, logs) and **linter hints** are
+  **Python/JS only** today — other languages (Java, Go, C, …) get full LLM
+  review *without* that extra safety net. Adding detector patterns for more
+  languages is straightforward future work.
+- **File size.** Files are split into ~6.7 KB chunks (from the 3072-token
+  context). The model sees one chunk at a time, so a bug spanning a chunk
+  boundary can be missed; chunking is line-based, not AST-aware (tree-sitter is
+  future work).
+- **Repo size.** No hard limit, but review time scales with (files × chunks) ×
+  ~30–60 s CPU inference per chunk — a large repo can take a while. Mitigations:
+  the result cache skips unchanged files on re-runs, and **`--diff` reviews only
+  files changed vs a git ref** — the practical way to run on a big repo or
+  pre-commit (`python3 agent/agent.py --target . --diff`).
+- **Analysis boundary.** Review is chunk-local: no whole-repo context, no
+  cross-file or data-flow/call-graph analysis. It reasons about the code in
+  front of it. Independent validation (OWASP Benchmark, Java) shows the
+  consequence — **high recall (96% of real vulnerabilities) but a real
+  false-positive rate on adversarial safe code** — which is why it's a
+  first-pass triage, not an authoritative gate. See REPORT.md.
+- **Latency.** CPU inference is inherently slower than cloud. Levers: `--diff`,
+  the result cache, the small Q3 model, physical-core threading. It's a
+  pre-commit reviewer, not a real-time linter.
+
 ## Why this exists — and who is behind it
 
 getdebug-edge shares its thesis with [getdebug.dev](https://getdebug.dev), an

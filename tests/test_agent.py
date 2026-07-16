@@ -12,7 +12,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "agent"))
 
 import agent  # noqa: E402
-from agent import ResultCache, chars_per_chunk, chunk_file, physical_core_count, run_linters  # noqa: E402
+from agent import ResultCache, chars_per_chunk, chunk_file, physical_core_count, run_linters, changed_files  # noqa: E402
 from prompts import (  # noqa: E402
     build_review_prompt, build_system_prompt, extract_findings,
     build_fix_prompt, extract_code_block,
@@ -179,6 +179,23 @@ class EnvironmentTest(unittest.TestCase):
         n = physical_core_count()
         self.assertGreaterEqual(n, 1)
         self.assertLessEqual(n, 128)
+
+    def test_changed_files_lists_only_changed(self):
+        import subprocess
+        with tempfile.TemporaryDirectory() as d:
+            repo = Path(d)
+            run = lambda *a: subprocess.run(["git", "-C", str(repo), *a], capture_output=True)
+            run("init"); run("config", "user.email", "t@t"); run("config", "user.name", "t")
+            (repo / "old.py").write_text("x = 1\n")
+            run("add", "-A"); run("commit", "-m", "init")
+            (repo / "new.py").write_text("y = 2\n")          # untracked
+            (repo / "old.py").write_text("x = 1\nz = 3\n")   # modified
+            names = {p.name for p in changed_files(repo)}
+            self.assertEqual(names, {"new.py", "old.py"})
+
+    def test_changed_files_empty_outside_git(self):
+        with tempfile.TemporaryDirectory() as d:
+            self.assertEqual(changed_files(Path(d)), [])
 
     def test_linters_flag_syntax_error(self):
         with tempfile.NamedTemporaryFile("w", suffix=".py", delete=False) as f:

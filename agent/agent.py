@@ -295,6 +295,28 @@ def discover_files(target: Path) -> list[Path]:
     return sorted(files)
 
 
+def changed_files(target: Path, ref: str | None = None) -> list[Path]:
+    """Code files changed vs a git ref (default: working tree + staged vs HEAD),
+    plus new untracked files. The biggest practical latency lever: on a large
+    repo you review only what you touched, the way a pre-commit reviewer should.
+    Falls back to an empty list (caller can warn) if git isn't available."""
+    base = ["git", "-C", str(target)]
+    cmds = [base + ["diff", "--name-only", ref or "HEAD"],
+            base + ["ls-files", "--others", "--exclude-standard"]]
+    out: set[Path] = set()
+    for cmd in cmds:
+        try:
+            res = subprocess.run(cmd, capture_output=True, text=True, timeout=20)
+        except (OSError, subprocess.SubprocessError):
+            continue
+        for line in res.stdout.splitlines():
+            p = (target / line).resolve()
+            if p.is_file() and p.suffix in CODE_EXTENSIONS and not any(
+                    part in SKIP_DIRS for part in p.parts):
+                out.add(p)
+    return sorted(out)
+
+
 def chars_per_chunk(ctx_size: int) -> int:
     """Derive a char budget per chunk from the context window, leaving room
     for the system prompt, instructions, and the model's own output."""
@@ -446,9 +468,9 @@ class LlamaServer:
 def review_repo(target: Path, server: LlamaServer, char_budget: int, verbose: bool = False,
                 system: str = SYSTEM_PROMPT, lint: bool = True,
                 cache: ResultCache | None = None, spec: str = "",
-                fix: bool = False) -> ReviewReport:
+                fix: bool = False, only: list[Path] | None = None) -> ReviewReport:
     report = ReviewReport(target=str(target), model=str(server.model_path))
-    files = discover_files(target)
+    files = only if only is not None else discover_files(target)
     report.files_scanned = len(files)
 
     for path in files:
@@ -530,6 +552,10 @@ def main() -> None:
                         help="For each flagged chunk, also generate corrected code (CodeRabbit-"
                              "style suggested change) into the report's fix_code field. Opt-in: "
                              "roughly doubles inference on files with findings.")
+    parser.add_argument("--diff", nargs="?", const="HEAD", default=None, metavar="REF",
+                        help="Review only files changed vs a git ref (default HEAD: staged + "
+                             "unstaged + untracked). The main latency lever on large repos — "
+                             "review what you changed, not the whole tree.")
     args = parser.parse_args()
 
     if not args.target and not args.prompt:
@@ -558,9 +584,13 @@ def main() -> None:
             return
         budget = chars_per_chunk(args.ctx_size)
         cache = ResultCache(args.model.name, system, enabled=not args.no_cache)
+        only = changed_files(args.target, None if args.diff == "HEAD" else args.diff) if args.diff else None
+        if only is not None and not only:
+            print("--diff: no changed code files vs "
+                  f"{args.diff} (or not a git repo). Nothing to review.", file=sys.stderr)
         report = review_repo(args.target, server, budget, verbose=args.verbose,
                              system=system, lint=not args.no_lint, cache=cache, spec=spec_text,
-                             fix=args.fix)
+                             fix=args.fix, only=only)
         cache.save()
     finally:
         server.stop()

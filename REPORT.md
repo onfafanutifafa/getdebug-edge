@@ -250,6 +250,33 @@ detectors: it over-flags some clean code — a correct `Decimal` money function,
 bounds-checked slice — and on a real Flask app misread parameterized queries as
 injection. The detectors are high-precision by construction and added none.
 
+### Independent validation — OWASP Benchmark (Java)
+
+To check generalization beyond our self-authored corpus, we ran the shipping
+model over a balanced 36-case sample of the **OWASP Benchmark** — independent,
+externally-labeled Java, across the six categories we target (SQLi, command
+injection, path traversal, weak hash, weak crypto, weak random). Java is a
+language the tool was *not* tuned on, and the deterministic detectors are
+Python/JS-specific and do not fire here, so this measures the **model's raw
+detection ability** on unseen, taint-flow code. Results:
+
+| Metric | Value |
+|---|---|
+| **Recall (real vulnerabilities)** | **23/24 = 96%** |
+| **False-positive rate (safe decoys)** | **9/12 = 75%** |
+| Precision | 23/32 = 72% |
+
+The honest reading: the model has **high recall — it rarely misses a real
+vulnerability** — but on adversarial *decoys* (safe code that mimics a
+vulnerable shape) it **over-flags badly.** On the benchmark's discrimination
+measure (recall − false-positive rate ≈ 21%) this is weak, because it doesn't
+reliably distinguish a sanitized flow from an unsanitized one. This is
+independent confirmation of the tool's core character — high recall, real
+false-positive rate — and precisely why it is positioned as a **first-pass
+triage a human confirms, not an authoritative gate.** (Detectors would not
+help here — they are Python/JS-specific; extending them and adding data-flow
+awareness is the clearest path to better precision.)
+
 **Measurement caveat:** LLM ground truth is regex-matched against the model's
 prose, which adds noise in both directions — we found and corrected one case
 where the model caught a bug but phrased it differently than our matcher
