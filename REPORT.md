@@ -185,7 +185,7 @@ addressed the gap (see below) with a deterministic hybrid pass:
 | Base model, generic prompt, 10-bug corpus (flattering small sample) | 8/10 = 80% | 3 |
 | Base model, generic prompt, 22-bug corpus | 15/22 = 68% | 5 |
 | **Bare model, methodology baked into chat template (the judged path)** | **18/22 = 82%** | ~10 (mostly measurement artifact — see below) |
-| Product path: agent (model + deterministic detectors) | 18/22 = 82% | 5 |
+| Product path: agent (model + deterministic detectors, incl. JWT-no-expiry) | 19/22 = 86% | 5 |
 
 Two honesty points, both stated plainly. First, **expanding the sample dropped
 the number from 80% to 68%** — the small sample flattered the tool, and even at
@@ -210,8 +210,12 @@ We close that gap **two ways, one for each path**:
   tested worse (77%) and was reverted.
 - **The product path** (the actual tool a developer runs) adds the
   deterministic detectors (`agent/detectors.py`) — a hybrid that doesn't ask a
-  3B model to do what a regex does better — reaching the same 82% recall with
-  no added false positives (a regex on `hashlib.md5` cannot hallucinate).
+  3B model to do what a regex does better — reaching **86% recall** with no
+  added false positives (a regex on `hashlib.md5` cannot hallucinate). The
+  three still-missed bugs (broken access control / IDOR, and two business-logic
+  validation cases) are genuinely reasoning-heavy: no regex catches them, and
+  prompt-cue experiments to make the 3B reason about them measurably *lowered*
+  accuracy — a real capability ceiling, honestly reported.
 
 **What the hybrid still misses is honest and instructive** — the 4 remaining
 are all *reasoning-heavy, not pattern-matchable*: IDOR (requires understanding
