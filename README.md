@@ -98,9 +98,10 @@ The agent also:
   target root): describe how the app *should* behave, and the model checks the
   code against your intent — the tractable way to surface **business-logic
   bugs** (wrong amounts, missing guards, access-control gaps) that generic
-  review can't find, because they're only bugs relative to intent. Measured to
-  flip the reasoning-heavy misses (negative-percent, overselling) from missed
-  to caught.
+  review can't find, because they're only bugs relative to intent. In a small
+  test (3 business-logic bugs) a spec flipped all three from missed to caught —
+  but this is a *per-project capability whose payoff depends on your spec's
+  quality*, not a fixed recall number, so we don't headline a percentage for it.
 - can **suggest code fixes** (`--fix`): for each flagged chunk it emits
   corrected code into the report's `fix_code` field (CodeRabbit-style suggested
   change). Because the base is a *code* model, it also writes code on request

@@ -272,15 +272,26 @@ integration, adtc-profiler output, bench.sh comparison table. -->
 
 ## Known Limitations
 
-- **Reasoning-heavy false negatives — largely addressed by spec-aware review.**
-  Without knowing intent, the model (and any regex) misses business-logic bugs:
-  access control (IDOR), missing quantity/bounds checks, and similar. These are
-  only "bugs" relative to what the code is *supposed* to do. The `--spec`
-  feature closes this: given a plain-language description of intended behavior,
-  the model checks the code against it — measured to flip the previously-missed
-  negative-percent and overselling cases from missed to **caught**. The residual
-  limitation is that this requires the developer to supply a spec; without one,
-  these classes remain hard.
+- **Reasoning-heavy false negatives — helped by spec-aware review, but not a
+  recall claim.** Without knowing intent, the model (and any regex) misses
+  business-logic bugs: access control (IDOR), missing quantity/bounds checks,
+  and similar. These are only "bugs" relative to what the code is *supposed* to
+  do. The `--spec` feature helps: given a plain-language description of intended
+  behavior, the model checks the code against it — in a **small test (3
+  hand-picked business-logic bugs, with specs written to describe the intended
+  behavior), all three flipped from missed to caught.** We deliberately do
+  **not** turn this into a headline recall number: the specs were tailored to
+  the bugs (teaching-to-the-test), the sample is tiny, and real-world recall
+  depends entirely on the quality of the developer's spec. It is a *per-project
+  capability*, not a benchmark figure — the honest tool number remains 86%
+  (without a spec); a spec extends coverage on *your* code when you describe
+  your rules.
+- **The benchmark is small and self-authored** (22 seeded bugs + 8 clean
+  controls). Numbers are honestly caveated with wide confidence intervals
+  throughout, but the clearest next step for firmer, more generalizable figures
+  is validation against a larger, *independent* ground-truth set — e.g. public
+  SAST benchmarks (OWASP Benchmark, NIST Juliet) or real CVE-fixed files. This
+  is future work, not done here.
 - **The model's false-positive rate on clean code is real** (it over-flagged
   correctly-parameterized queries in the Flask case study). Mitigated by the
   first-pass-triage positioning, but not eliminated.
