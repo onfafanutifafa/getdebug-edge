@@ -51,6 +51,12 @@ _SEC_CONTEXT = re.compile(r"token|secret|otp|password|passwd|pin|session|nonce|s
 _LOG_CALL = re.compile(r"\b(logging\.\w+|logger\.\w+|console\.(?:log|info|warn|error|debug)|print)\s*\(", re.IGNORECASE)
 _SENSITIVE = re.compile(r"\b(password|passwd|pwd|secret|api[_-]?key|access[_-]?token|private[_-]?key|\bpin\b)\b", re.IGNORECASE)
 
+# --- JWT issued without an expiry claim (token never expires). ---
+# Needs multi-line context (the exp may sit in a payload dict just above the
+# call), so this is checked over the full text, not per line.
+_JWT_SIGN = re.compile(r"\bjwt\.(?:encode|sign)\s*\(", re.IGNORECASE)
+_JWT_HAS_EXP = re.compile(r"""['"]exp['"]|expiresIn|\bexpires?\b|\bexp\b\s*[:=]""", re.IGNORECASE)
+
 
 def _fmt(severity: str, summary: str, line: int, fix: str) -> str:
     return f"- [{severity}] {summary} (line ~{line}) — fix: {fix}"
@@ -102,5 +108,16 @@ def scan_text(text: str) -> list[str]:
             add("log", lineno, _fmt(
                 "medium", "Sensitive data (password/secret/token) written to logs", lineno,
                 "never log secrets; redact or omit the sensitive field"))
+
+    # JWT issued with no expiry — check a window before and after each sign
+    # call so an exp claim in an inline payload OR a payload dict defined just
+    # above still counts (keeps precision high).
+    for m in _JWT_SIGN.finditer(text):
+        window = text[max(0, m.start() - 200):m.start() + 300]
+        if not _JWT_HAS_EXP.search(window):
+            lineno = text[:m.start()].count("\n") + 1
+            add("jwt_exp", lineno, _fmt(
+                "medium", "JWT issued without an expiry (exp) claim — the token never expires", lineno,
+                "add an exp claim (e.g. now + a timedelta), or set expiresIn, so tokens expire"))
 
     return findings
