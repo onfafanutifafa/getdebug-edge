@@ -272,11 +272,15 @@ integration, adtc-profiler output, bench.sh comparison table. -->
 
 ## Known Limitations
 
-- **Remaining false negatives are reasoning-heavy classes** the deterministic
-  detectors can't reach: access control (IDOR), business-logic validation
-  (missing quantity/bounds checks), and semantic issues like a token that never
-  expires. These need the model to reason about intent; the clearest future
-  work is a targeted skill/prompt pass or lightweight taint analysis for authz.
+- **Reasoning-heavy false negatives — largely addressed by spec-aware review.**
+  Without knowing intent, the model (and any regex) misses business-logic bugs:
+  access control (IDOR), missing quantity/bounds checks, and similar. These are
+  only "bugs" relative to what the code is *supposed* to do. The `--spec`
+  feature closes this: given a plain-language description of intended behavior,
+  the model checks the code against it — measured to flip the previously-missed
+  negative-percent and overselling cases from missed to **caught**. The residual
+  limitation is that this requires the developer to supply a spec; without one,
+  these classes remain hard.
 - **The model's false-positive rate on clean code is real** (it over-flagged
   correctly-parameterized queries in the Flask case study). Mitigated by the
   first-pass-triage positioning, but not eliminated.

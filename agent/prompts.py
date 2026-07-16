@@ -53,7 +53,7 @@ def build_system_prompt(skill_text: str = "", lang: str = "") -> str:
 
 
 def build_review_prompt(file_path: str, chunk_text: str, chunk_index: int, chunk_total: int,
-                        lint_output: str = "") -> str:
+                        lint_output: str = "", spec: str = "") -> str:
     lint_section = ""
     if lint_output.strip():
         lint_section = f"""
@@ -62,12 +62,25 @@ Linter output for this file (static-analysis hints — verify each against the c
 {lint_output.strip()}
 ```
 """
+    # Spec-aware review: given the intended behavior, the model checks the code
+    # AGAINST it — the tractable way to surface business-logic bugs (wrong
+    # amounts, missing guards, access-control gaps) that generic review misses,
+    # because those are only "bugs" relative to intent.
+    spec_section = ""
+    if spec.strip():
+        spec_section = f"""
+Intended behavior — the developer's specification for how this code SHOULD work:
+{spec.strip()}
+Treat any code that violates this intended behavior as a finding (e.g. a value \
+that can go out of the specified range, a rule that isn't enforced, an action \
+allowed that the spec forbids), in addition to the usual bug and security checks.
+"""
     return f"""File: {file_path} (chunk {chunk_index + 1}/{chunk_total})
 
 ```
 {chunk_text}
 ```
-{lint_section}
+{lint_section}{spec_section}
 First, briefly walk through what this code does and what could go wrong (2-3 \
 sentences). Then list your findings, one line each:
 - [high|medium|low] <one-line summary> (line ~N) — fix: <short suggested fix>

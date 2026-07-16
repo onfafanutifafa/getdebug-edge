@@ -73,9 +73,20 @@ from detectors import scan_text
 DEFAULT_SKILL_PATH = Path(__file__).resolve().parent.parent / "skills" / "SKILL.md"
 
 _MODEL_DIR = Path(__file__).resolve().parent.parent / "model"
-_BAKED = _MODEL_DIR / "getdebug-edge-3b-q4_k_m.gguf"          # persona-baked (see tools/bake_persona.py)
-_BASE = _MODEL_DIR / "qwen2.5-coder-3b-instruct-q4_k_m.gguf"  # upstream weights
-DEFAULT_MODEL_PATH = _BAKED if _BAKED.exists() else _BASE
+# Shipping model: Q3_K_M, persona-baked. Chosen over Q4_K_M after a measured
+# quant sweep (see REPORT.md): equal-or-better accuracy at ~18% smaller size,
+# ~35% faster generation, and ~1.1 GB less RAM (a big Seff win) — also more
+# accessible on low-RAM, metered-data hardware. Falls back to whatever GGUF
+# is present so a plain Q4/base download still works.
+DEFAULT_MODEL_PATH = next(
+    (p for p in (
+        _MODEL_DIR / "getdebug-edge-3b-q3_k_m.gguf",   # persona-baked Q3 (shipping)
+        _MODEL_DIR / "getdebug-edge-3b-q4_k_m.gguf",   # persona-baked Q4 (fallback)
+        _MODEL_DIR / "qwen2.5-coder-3b-instruct-q3_k_m.gguf",
+        _MODEL_DIR / "qwen2.5-coder-3b-instruct-q4_k_m.gguf",
+    ) if p.exists()),
+    _MODEL_DIR / "getdebug-edge-3b-q3_k_m.gguf",
+)
 
 
 def physical_core_count() -> int:
@@ -201,12 +212,36 @@ class ResultCache:
             pass  # cache is best-effort — never fail a run over it
 
 
+# Substrings that mean the linter itself failed for an *environment* reason
+# (can't write __pycache__ on a read-only mount, no permission, an interpreter
+# traceback) rather than finding a problem in the code under review. Their text
+# must never reach the model: it was reported verbatim as a real code finding —
+# observed as false [high] "Read-only file system" findings when reviewing a
+# read-only-mounted repo. A genuine ruff/pyflakes/py_compile diagnostic (even a
+# SyntaxError) never contains any of these.
+_LINTER_ENV_ERROR_SIGNATURES = (
+    "Traceback (most recent call last)",
+    "[Errno ",
+    "Read-only file system",
+    "Permission denied",
+)
+
+
+def _looks_like_linter_env_error(output: str) -> bool:
+    return any(sig in output for sig in _LINTER_ENV_ERROR_SIGNATURES)
+
+
 def run_linters(path: Path, max_chars: int = 600) -> str:
     """Run whatever linter is available for this file type and return trimmed
     output for the model to verify against the code. Degrades gracefully:
     ruff -> pyflakes -> py_compile for Python (py_compile is always present,
     so even a bare offline laptop gets syntax checking); `node --check` for
     JavaScript if node exists. Never raises; empty string means no hints.
+
+    Only actual lint diagnostics are passed through: if a linter crashes for
+    an environment reason (e.g. py_compile can't write __pycache__ into a
+    read-only target directory), its error text is dropped rather than handed
+    to the model, which would otherwise report the OS error as a code finding.
     """
     cmds: list[list[str]] = []
     if path.suffix == ".py":
@@ -218,13 +253,27 @@ def run_linters(path: Path, max_chars: int = 600) -> str:
     elif path.suffix in (".js", ".mjs", ".cjs") and shutil.which("node"):
         cmds.append(["node", "--check", str(path)])
 
+    # Redirect any bytecode cache py_compile would write into a directory we
+    # control, so syntax-checking a file under a read-only mount doesn't fail
+    # trying to create __pycache__ next to the source. PYTHONPYCACHEPREFIX is
+    # honored by py_compile's cache-path computation; the two extra vars are
+    # belt-and-suspenders and harmless to ruff/pyflakes/node.
+    env = os.environ.copy()
+    env["PYTHONPYCACHEPREFIX"] = str(CACHE_DIR / "pycache")
+    env["PYTHONDONTWRITEBYTECODE"] = "1"
+
     for cmd in cmds:
         try:
-            proc = subprocess.run(cmd, capture_output=True, text=True, timeout=20)
+            proc = subprocess.run(cmd, capture_output=True, text=True, timeout=20, env=env)
         except (OSError, subprocess.SubprocessError):
             continue
         output = (proc.stdout + proc.stderr).strip()
         if "No module named" in output:  # pyflakes not installed — try next
+            continue
+        if _looks_like_linter_env_error(output):
+            # The linter crashed on the environment, it didn't find a lint
+            # issue. Drop the error text (never surface it as a finding) and
+            # try the next fallback linter, if any.
             continue
         if output:
             return output[:max_chars]
@@ -392,7 +441,7 @@ class LlamaServer:
 
 def review_repo(target: Path, server: LlamaServer, char_budget: int, verbose: bool = False,
                 system: str = SYSTEM_PROMPT, lint: bool = True,
-                cache: ResultCache | None = None) -> ReviewReport:
+                cache: ResultCache | None = None, spec: str = "") -> ReviewReport:
     report = ReviewReport(target=str(target), model=str(server.model_path))
     files = discover_files(target)
     report.files_scanned = len(files)
@@ -410,7 +459,7 @@ def review_repo(target: Path, server: LlamaServer, char_budget: int, verbose: bo
                         findings=det, raw_response="[deterministic detectors]"))
         for idx, chunk in enumerate(chunks):
             prompt = build_review_prompt(str(path.relative_to(target)), chunk, idx, len(chunks),
-                                         lint_output=lint_output)
+                                         lint_output=lint_output, spec=spec)
             cached = cache.get(prompt) if cache else None
             response = cached
             if response is None:
@@ -458,6 +507,11 @@ def main() -> None:
                              "(VS Code problemMatcher-compatible; see USER_MANUAL.md)")
     parser.add_argument("--no-cache", action="store_true",
                         help="Disable the chunk result cache (unchanged files normally skip re-review on repeat runs)")
+    parser.add_argument("--spec", type=Path, default=None,
+                        help="Path to a plain-language spec of how the app SHOULD behave. The "
+                             "model checks the code against it, surfacing business-logic bugs "
+                             "(wrong amounts, missing guards, access-control gaps) that generic "
+                             "review misses. If omitted, a SPEC.md at the target root is used.")
     args = parser.parse_args()
 
     if not args.target and not args.prompt:
@@ -472,6 +526,12 @@ def main() -> None:
         skill_text = args.skill.read_text(errors="ignore")
     system = build_system_prompt(skill_text, args.lang)
 
+    # Spec-aware review: explicit --spec file, else a SPEC.md at the target root.
+    spec_text = ""
+    spec_path = args.spec or (args.target / "SPEC.md" if args.target else None)
+    if spec_path and spec_path.exists():
+        spec_text = spec_path.read_text(errors="ignore")
+
     server = LlamaServer(args.model, args.ctx_size, args.threads, args.port)
     server.start()
     try:
@@ -481,7 +541,7 @@ def main() -> None:
         budget = chars_per_chunk(args.ctx_size)
         cache = ResultCache(args.model.name, system, enabled=not args.no_cache)
         report = review_repo(args.target, server, budget, verbose=args.verbose,
-                             system=system, lint=not args.no_lint, cache=cache)
+                             system=system, lint=not args.no_lint, cache=cache, spec=spec_text)
         cache.save()
     finally:
         server.stop()

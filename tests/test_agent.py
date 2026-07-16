@@ -2,6 +2,8 @@
 
 Run: python3 -m unittest discover tests
 """
+import os
+import shutil
 import sys
 import tempfile
 import unittest
@@ -9,6 +11,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "agent"))
 
+import agent  # noqa: E402
 from agent import ResultCache, chars_per_chunk, chunk_file, physical_core_count, run_linters  # noqa: E402
 from prompts import build_review_prompt, build_system_prompt, extract_findings  # noqa: E402
 from detectors import scan_text  # noqa: E402
@@ -163,6 +166,53 @@ class EnvironmentTest(unittest.TestCase):
         out = run_linters(path)
         self.assertTrue(out, "expected linter output for a syntax error")
         path.unlink()
+
+    def test_linter_env_error_yields_no_context(self):
+        # A linter that crashes for an environment reason (e.g. py_compile
+        # can't write __pycache__ into a read-only target dir) must not have
+        # its OS-error text passed through as lint context — that produced
+        # false [high] "Read-only file system" findings on read-only mounts.
+        errored = (
+            "Traceback (most recent call last):\n"
+            '  File "<frozen importlib._bootstrap_external>", line 1, in _write_atomic\n'
+            "OSError: [Errno 30] Read-only file system: "
+            "'/mnt/ro/__pycache__/mod.cpython-312.pyc'"
+        )
+        self.assertTrue(agent._looks_like_linter_env_error(errored))
+        for signature in (
+            "[Errno 13] Permission denied: '/x/__pycache__'",
+            "OSError: [Errno 30] Read-only file system: '/x'",
+        ):
+            self.assertTrue(agent._looks_like_linter_env_error(signature), signature)
+
+    def test_real_lint_diagnostic_passes_through(self):
+        # A genuine diagnostic (even a SyntaxError report) is not an env error
+        # and must still reach the model.
+        self.assertFalse(agent._looks_like_linter_env_error(
+            "a.py:2:5: F401 'os' imported but unused"))
+        self.assertFalse(agent._looks_like_linter_env_error(
+            "Sorry: SyntaxError: invalid syntax (broken.py, line 1)"))
+
+    def test_linters_clean_on_read_only_target(self):
+        # End-to-end: a syntactically-valid file whose directory is read-only
+        # must yield empty lint context, not a passed-through OS error. This
+        # exercises the py_compile fallback path (skipped if ruff is present,
+        # since ruff never writes bytecode).
+        if shutil.which("ruff"):
+            self.skipTest("ruff present — py_compile bytecode path not exercised")
+        ro_dir = Path(tempfile.mkdtemp())
+        src = ro_dir / "clean.py"
+        src.write_text("def add(a, b):\n    return a + b\n")
+        os.chmod(ro_dir, 0o500)  # read + execute, no write
+        try:
+            out = run_linters(src)
+            self.assertNotIn("Read-only file system", out)
+            self.assertNotIn("Errno", out)
+            self.assertEqual(out, "", "clean file should yield no lint hints")
+        finally:
+            os.chmod(ro_dir, 0o700)
+            src.unlink()
+            ro_dir.rmdir()
 
 
 if __name__ == "__main__":

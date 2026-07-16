@@ -91,9 +91,16 @@ The agent also:
   static-analysis hints to verify — disable with `--no-lint`
 - runs a **deterministic hybrid pass** ([agent/detectors.py](./agent/detectors.py))
   for pattern-matchable classes the 3B model reliably misses — hardcoded
-  secrets, weak crypto (MD5/SHA-1, ECB), secrets written to logs — lifting
-  measured recall from 68% to 82% with zero added false positives (see
-  REPORT.md)
+  secrets, weak crypto (MD5/SHA-1, ECB), secrets written to logs, JWTs with no
+  expiry — lifting measured recall from 68% to 86% with zero added false
+  positives (see REPORT.md)
+- supports **spec-aware review** (`--spec spec.md`, or a `SPEC.md` at the
+  target root): describe how the app *should* behave, and the model checks the
+  code against your intent — the tractable way to surface **business-logic
+  bugs** (wrong amounts, missing guards, access-control gaps) that generic
+  review can't find, because they're only bugs relative to intent. Measured to
+  flip the reasoning-heavy misses (negative-percent, overselling) from missed
+  to caught.
 
 The agent starts and stops its own persistent `llama-server` — no separate
 server process to manage, and zero network calls after the model is on disk.
