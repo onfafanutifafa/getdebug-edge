@@ -193,7 +193,25 @@ surfaced the 3B model's precision ceiling — it over-flagged correctly
 parameterized queries as injection — which is why the tool is positioned as a
 first-pass triage, not an authoritative gate.
 
-### Measured accuracy — reported honestly, with the sample caveat
+### How the contest scores accuracy vs. what our numbers measure
+
+An important distinction, stated plainly so nothing here is misread. The
+contest's automated accuracy (50% of the score) is measured by the ADTC
+profiler running **lm-evaluation-harness** on a hidden benchmark dataset,
+scoring the **raw model's continuation log-probabilities** — it does **not**
+apply our chat template, and it does **not** run our agent, detectors, or
+spec. So the automated Sacc reflects the *base model's capability and
+quantization*, not our review methodology. (A separate qualitative judge read
+of prompt responses may exist, where our baked methodology could help; the
+automated stage does not use it.)
+
+Everything below is **our own code-review benchmark** — a fair measure of *the
+tool's* quality for a developer, and of *our* engineering — but it is a
+different thing from the contest's lm-eval Sacc. We keep the two separate:
+our detectors, spec-aware review, and baked methodology make the *product*
+better; they do not move the automated contest number.
+
+### Measured accuracy (our code-review benchmark) — reported honestly
 
 We hold an internal benchmark (`eval/`) and score the shipping model
 deterministically. We first measured on 10 seeded bugs and saw 80% recall — but

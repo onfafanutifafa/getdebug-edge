@@ -47,7 +47,12 @@ submitted commit hash.
       model produce a wrong fix)
 - [ ] Add `LICENSE` (Apache-2.0 for our code) + attribution section (llama.cpp,
       model license; "Built with Llama" notice if strategy B)
-- [ ] Re-run `adtc-profiler` on the final commit; commit `submission.json`
+- [ ] **Final `adtc-profiler` run must include the accuracy stage** (NOT
+      `--skip-accuracy`) — accuracy is 50% of the score and runs lm-eval on the
+      raw model. Earlier runs used `--skip-accuracy`; the submitted
+      `submission.json` must be a full run. Ideally on the reference i5, which
+      also confirms the Q3-vs-Q4 accuracy delta. Needs the accuracy stack
+      installed (`pip install lm-eval llama-cpp-python`).
 
 ## Benchmarks on believable hardware
 
@@ -94,10 +99,13 @@ grid is the constraint. On real Ubuntu, under a hard 8-gig ceiling: 3.5 gigs
 peak, no crash, no throttling."
 
 **[1:40–2:00 — honesty + impact]**
-"We measured our own accuracy honestly — 68% from the model alone, 82% once we
-added the detectors — and we report our false-positive rate, because a security
-tool should. It's a first-pass safety net with no cloud bill and no data leaving
-the machine. Free and open-source, built for the hardware Africa actually has."
+"I measured the tool honestly — on my own benchmark it catches around 86% of
+seeded bugs, and I report its false-positive rate too, because a security tool
+should. It's a first-pass safety net with no cloud bill and no data leaving the
+machine. Free and open-source, built for the hardware Africa actually has."
+<!-- NB: frame 86% as THE TOOL's review recall (product), not the contest's
+automated accuracy score — those are different metrics (see REPORT). -->
+
 
 Key on-screen proof to show: airplane-mode toggle, a real finding + fix,
 VS Code Problems panel, the `adtc-profiler`/8 GB no-OOM result, the
@@ -109,6 +117,12 @@ VS Code Problems panel, the `adtc-profiler`/8 GB no-OOM result, the
 is now **Q3_K_M** (quant sweep in REPORT.md): peak RAM ~2.65 GB → S_eff =
 100×(7−2.65)/7 = **62**; P_thermal = **0**; S_perf = 100×(TPS/15), and Q3's
 generation is ~35% faster than Q4 (14.6 vs 10.8 t/s on the dev machine).
+
+<!-- S_acc here = the AUTOMATED lm-eval benchmark score on the raw model (the
+profiler's accuracy stage, no chat template, no agent). It is NOT our
+code-review recall (82%/86%) — that measures the tool, not the contest metric.
+Q3-vs-Q4 proxy MCQ: 88% vs 92% (24 q, within noise); confirm on the final
+full profiler run (accuracy stage enabled) on reference hardware. -->
 
 | Scenario | S_acc (est.) | TPS → S_perf | S_eff | S_total |
 |---|---|---|---|---|
