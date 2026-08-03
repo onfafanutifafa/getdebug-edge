@@ -162,10 +162,10 @@ and **augmented** it (detectors + spec), not smarter. See
 
 - **Languages.** The LLM reviews any file in these extensions: `.py .js .ts
   .jsx .tsx .java .go .rs .c .cpp .h .hpp .cs .rb .php .sql`. The **deterministic
-  detectors** (secrets, weak crypto, JWT, logs) and **linter hints** are
-  **Python/JS only** today — other languages (Java, Go, C, …) get full LLM
-  review *without* that extra safety net. Adding detector patterns for more
-  languages is straightforward future work.
+  detectors** (hardcoded secrets, weak crypto, weak RNG, secrets-in-logs) cover
+  **Python, JS, Java, and Go**; the JWT-no-expiry detector and **linter hints**
+  are Python/JS. Other languages (Rust, C, C#, …) get full LLM review without
+  the extra detector net yet — adding their patterns is straightforward.
 - **File size.** Files are split into ~6.7 KB chunks (from the 3072-token
   context). The model sees one chunk at a time, so a bug spanning a chunk
   boundary can be missed; chunking is line-based, not AST-aware (tree-sitter is

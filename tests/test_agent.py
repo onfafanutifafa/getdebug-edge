@@ -173,6 +173,39 @@ class DetectorTest(unittest.TestCase):
                  "import bcrypt\nh = bcrypt.hashpw(pw, bcrypt.gensalt())\n")
         self.assertEqual(scan_text(clean), [])
 
+    # --- Java ---
+    def test_java_md5(self):
+        self.assertTrue(self._has(scan_text('MessageDigest.getInstance("MD5");'), "weak hash"))
+
+    def test_java_des_cipher(self):
+        self.assertTrue(self._has(scan_text('Cipher.getInstance("DES/ECB/PKCS5Padding");'), "insecure cipher"))
+
+    def test_java_secret_in_log(self):
+        self.assertTrue(self._has(scan_text('logger.info("password={}", password);'), "sensitive data"))
+
+    def test_java_hardcoded_secret(self):
+        self.assertTrue(self._has(scan_text('String apiKey = "sk_live_abc123DEF456ghi789";'), "hardcoded secret"))
+
+    def test_java_sha256_is_safe(self):
+        self.assertEqual(scan_text('MessageDigest.getInstance("SHA-256");'), [])
+
+    # --- Go ---
+    def test_go_md5(self):
+        self.assertTrue(self._has(scan_text("h := md5.New()"), "weak hash"))
+
+    def test_go_des(self):
+        self.assertTrue(self._has(scan_text("block, _ := des.NewCipher(key)"), "insecure cipher"))
+
+    def test_go_walrus_secret(self):
+        self.assertTrue(self._has(scan_text('apiKey := "sk_live_abc123DEF456ghi789"'), "hardcoded secret"))
+
+    def test_go_math_rand_token(self):
+        f = scan_text('token := fmt.Sprintf("%d", rand.Intn(999999))')
+        self.assertTrue(self._has(f, "non-cryptographic"))
+
+    def test_go_crypto_rand_is_safe(self):
+        self.assertEqual(scan_text("n, _ := rand.Read(buf)"), [])
+
 
 class EnvironmentTest(unittest.TestCase):
     def test_physical_core_count_sane(self):

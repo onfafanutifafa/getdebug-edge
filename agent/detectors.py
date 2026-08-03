@@ -1,6 +1,7 @@
 """Deterministic, LLM-free detectors for pattern-matchable vulnerability
 classes the 3B model reliably misses (measured in eval/): hardcoded secrets,
-weak cryptography, and sensitive data written to logs.
+weak cryptography, weak RNG, secrets-in-logs, and JWT-no-expiry. Syntax-aware
+patterns cover Python, JavaScript, Java, and Go (JWT is Python/JS).
 
 Design principle: don't ask a 3B model to do what a regex does better. These
 run as a cheap hybrid pass alongside the model — high precision by construction
@@ -29,26 +30,45 @@ _SECRET_ASSIGN = re.compile(
     r"([A-Za-z_][A-Za-z0-9_]*"
     r"(?:secret|passwd|pwd|api[_-]?key|access[_-]?token|auth[_-]?token|"
     r"client[_-]?secret|private[_-]?key|jwt[_-]?secret|password|apikey)"
-    r"[A-Za-z0-9_]*)\s*[:=]\s*(['\"])([^'\"]{6,})\2",
+    r"[A-Za-z0-9_]*)\s*(?::=|[:=])\s*(['\"])([^'\"]{6,})\2",   # =, :, and Go :=
     re.IGNORECASE,
 )
 _PLACEHOLDER = re.compile(r"^(changeme|placeholder|your[_-]?|xxx+|todo|example|test|dummy|<|\{)", re.IGNORECASE)
 
-# --- Weak cryptography. ---
+# --- Weak cryptography (Python, JS, Java, Go). ---
 _WEAK_CRYPTO = [
+    # Python
     (re.compile(r"hashlib\.(md5|sha1)\b", re.IGNORECASE),
      "high", "Weak hash ({m}) used", "use bcrypt/argon2/scrypt for passwords, SHA-256+ otherwise"),
+    # JS
     (re.compile(r"createHash\(\s*['\"](md5|sha1)['\"]", re.IGNORECASE),
      "high", "Weak hash ({m}) used", "use a modern algorithm (SHA-256+, or bcrypt for passwords)"),
+    # Java weak hash: MessageDigest.getInstance("MD5"|"SHA-1")
+    (re.compile(r"MessageDigest\.getInstance\(\s*['\"](MD5|SHA-?1)['\"]", re.IGNORECASE),
+     "high", "Weak hash ({m}) used", "use SHA-256+ (bcrypt/argon2 for passwords)"),
+    # Go weak hash: md5.New() / sha1.Sum(...) (crypto/md5, crypto/sha1)
+    (re.compile(r"\b(md5|sha1)\.(?:New|Sum)\b", re.IGNORECASE),
+     "high", "Weak hash ({m}) used", "use SHA-256+ (bcrypt/argon2 for passwords)"),
+    # Insecure cipher/mode: ECB anywhere; Java Cipher DES/ECB; Go des.NewCipher
     (re.compile(r"MODE_ECB|['\"]ecb['\"]", re.IGNORECASE),
      "high", "Insecure ECB cipher mode", "use an authenticated mode such as AES-GCM with a random nonce"),
+    (re.compile(r"Cipher\.getInstance\(\s*['\"][^'\"]*(DES|ECB)", re.IGNORECASE),
+     "high", "Insecure cipher/mode ({m})", "use AES-GCM with a random nonce"),
+    (re.compile(r"\b(des)\.NewCipher\b", re.IGNORECASE),
+     "high", "Insecure cipher ({m})", "use AES-GCM (crypto/aes + crypto/cipher) with a random nonce"),
 ]
-# Non-cryptographic RNG in a security-sensitive line.
-_WEAK_RANDOM = re.compile(r"Math\.random\s*\(|\brandom\.(randint|random|choice)\s*\(", re.IGNORECASE)
+# Non-cryptographic RNG in a security-sensitive line (Py, JS, Java, Go).
+_WEAK_RANDOM = re.compile(
+    r"Math\.random\s*\(|\brandom\.(?:randint|random|choice)\s*\(|"
+    r"new\s+(?:java\.util\.)?Random\s*\(|"                          # Java
+    r"\brand\.(?:Intn|Int31|Int63|Float64|Float32)\s*\(",           # Go math/rand
+    re.IGNORECASE)
 _SEC_CONTEXT = re.compile(r"token|secret|otp|password|passwd|pin|session|nonce|salt|api[_-]?key|auth", re.IGNORECASE)
 
-# --- Sensitive data written to logs. ---
-_LOG_CALL = re.compile(r"\b(logging\.\w+|logger\.\w+|console\.(?:log|info|warn|error|debug)|print)\s*\(", re.IGNORECASE)
+# --- Sensitive data written to logs (Py, JS, Java, Go). ---
+_LOG_CALL = re.compile(
+    r"\b(logging\.\w+|logger\.\w+|log\.\w+|console\.(?:log|info|warn|error|debug)|"
+    r"fmt\.Print\w*|System\.(?:out|err)\.print\w*|print)\s*\(", re.IGNORECASE)
 _SENSITIVE = re.compile(r"\b(password|passwd|pwd|secret|api[_-]?key|access[_-]?token|private[_-]?key|\bpin\b)\b", re.IGNORECASE)
 
 # --- JWT issued without an expiry claim (token never expires). ---
