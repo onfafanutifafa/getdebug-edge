@@ -13,6 +13,7 @@ A three-person fintech team in Accra moving school fees over mobile money often 
 getdebug-edge is an **offline, security-first code reviewer** — and, because its base is a code model, a fix-suggester and coding assistant too. You point it at a project folder and a 3-billion-parameter model running entirely on your CPU — **no internet, no account, no data ever leaving the machine** — reviews your code and flags bugs, vulnerabilities, and correctness issues with fixes.
 
 - **A three-layer hybrid.** The LLM reasons about the code; fast deterministic detectors catch pattern-matchable classes it misses (hardcoded secrets, weak crypto, secrets-in-logs, JWTs with no expiry); and **spec-aware review** — you describe how the app *should* behave in a `SPEC.md` — surfaces business-logic bugs that neither a model nor a regex can find without knowing intent.
+- **Multi-language.** The LLM reviews 15+ languages (Python, JS/TS, Java, Go, Rust, C/C++, C#, Ruby, PHP, SQL); the deterministic detectors cover **Python, JavaScript, Java, and Go**, so those developers get the extra safety net, not just LLM review.
 - **It suggests code, not just prose.** `--fix` emits corrected code for each finding; `--prompt` writes new code on request.
 - **It meets you where you work.** Findings drop into VS Code's Problems panel; explanations can come in other languages.
 - **It's tiny on purpose.** A 3-bit quantized model (~1.7 GB, ~2.6 GB RAM) — small enough to run on a 4 GB machine, or on a modern phone.
@@ -25,7 +26,7 @@ Every decision was measured, not assumed:
 - **Model:** I benchmarked **six** open models head-to-head (Qwen2.5-Coder-3B/1.5B, Qwen3-4B, Gemma-3-4B, Llama-3.2-3B, DeepSeek-Coder, GLM-Edge). Qwen2.5-Coder-3B won on accuracy-per-resource.
 - **Quantization:** a measured sweep across Q4/Q3/IQ quants chose **Q3_K_M** — smaller, faster, and lighter on RAM than Q4 at equal-or-better accuracy.
 - **The model, focused.** I baked the review methodology (analyze-first, the vulnerability checklist, the output format) into the model's chat template — so the bare model behaves as a security reviewer with no external harness. That alone took bare-model recall from 68% to 82%.
-- **The model, augmented.** Deterministic detectors and spec-aware checking wrap the model to catch what it misses — lifting the full tool to 86%, plus business-logic bugs.
+- **The model, augmented.** Deterministic detectors (across Python, JS, Java, and Go) and spec-aware checking wrap the model to catch what it misses — lifting the full tool to 86%, plus business-logic bugs.
 - **Engineering for the box:** persistent llama-server (model loaded once), physical-core threading, KV-cache quantization, prompt/result caching, deterministic decoding.
 - **A measurement harness** (a seeded-bug eval) gated every single change, and I verified the whole thing on real Ubuntu under a hard 8 GB ceiling.
 
