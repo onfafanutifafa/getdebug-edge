@@ -167,6 +167,26 @@ to be plausible; Twi/Ewe/Ga likely remain weak in ANY small open model).
 Whether Gemma's code-review accuracy holds up is exactly what the bake-off
 (`BAKEOFF.md`) measures — the multiplier only pays if `S_acc` doesn't crater.
 
+**Offline via a dedicated African-NLP model — researched and TESTED
+2026-08-06, not viable yet.** The African-NLP ecosystem (Masakhane, Lelapa AI,
+Soynade, MsingiAI, SERENGETI, AfriTeVa, Sunbird, AfroBench) is exactly the
+right place to look for a local translation layer. Only **InkubaLM-0.4B**
+(Lelapa AI) fits the stack — it ships as GGUF/LLaMA-arch, runs in llama.cpp,
+is ~424 MB, offline, and covers isiZulu, Yoruba, Hausa, Swahili, isiXhosa. We
+downloaded and tested it: as a **base** model (not instruction- or
+translation-tuned) at only 0.4B, it produced degenerate word-salad on
+finding-translation prompts (few-shot and direct) — unusable without
+fine-tuning it for translation, which is its own research effort. The
+higher-quality African MT lives in **Masakhane MT / NLLB-distilled** models,
+but those are PyTorch/HF seq2seq — not GGUF/llama.cpp — so adopting one means a
+second runtime and dependency, breaking the zero-dependency, single-llama.cpp,
+8 GB design. Honest conclusion: **no clean offline African-language
+finding-translation exists at small scale today.** Roadmap options, in order of
+realism: (1) fine-tune a small MT model (InkubaLM or an NLLB-distill) to GGUF
+for `--translate`, validated against **AfroBench**; (2) the Khaya online mode
+below; (3) wait for stronger small multilingual models. License note:
+InkubaLM is CC BY-NC 4.0 (blocks future commercial use).
+
 **Online (post-contest product mode, NOT in the eval path):**
 [Khaya AI](https://translation.ghananlp.org/) by GhanaNLP is the best
 translation coverage for Ghanaian + several other African languages (Twi, Ewe,
