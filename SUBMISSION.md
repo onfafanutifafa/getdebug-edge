@@ -75,7 +75,7 @@ submitted commit hash.
 7. `bench.sh` table: model comparison
 8. htop/sensors during a review: 8 threads busy, temperature under limit
 
-## 2-minute video script (≈260 words, storyboard) — v2, reflects final build
+## 2-minute video script (≈260 words, storyboard) — v3, real profiler numbers
 
 **[0:00–0:18 — problem, talking head or a $200 laptop on the desk]**
 "Cloud AI code reviewers are excellent — if you have fast internet, a company
@@ -92,11 +92,12 @@ alone would miss. In VS Code, findings land in the Problems panel, clickable to
 the line."
 
 **[1:05–1:40 — engineering, cutaways to charts]**
-"Everything is tuned to an 8-gigabyte, CPU-only budget. We benchmarked six open
-models, quantized to 4 bits, and found that using physical cores instead of
-hyperthreads made it 25% faster AND 27 degrees cooler — an energy win where the
-grid is the constraint. On real Ubuntu, under a hard 8-gig ceiling: 3.5 gigs
-peak, no crash, no throttling."
+"Everything is tuned to an 8-gigabyte, CPU-only budget. I benchmarked six open
+models, ship a 3-bit quantization, and found that using physical cores instead
+of hyperthreads made it 25% faster AND 27 degrees cooler — an energy win where
+the grid is the constraint. The contest's own profiler confirms the margin: just
+1.8 gigabytes of RAM — leaving most of the budget free — no crash, no
+throttling."
 
 **[1:40–2:00 — honesty + impact]**
 "I measured the tool honestly — on my own benchmark it catches around 86% of
@@ -104,12 +105,15 @@ seeded bugs, and I report its false-positive rate too, because a security tool
 should. It's a first-pass safety net with no cloud bill and no data leaving the
 machine. Free and open-source, built for the hardware Africa actually has."
 <!-- NB: frame 86% as THE TOOL's review recall (product), not the contest's
-automated accuracy score — those are different metrics (see REPORT). -->
+automated accuracy score — those are different metrics. The automated profiler
+score is acc_norm 0.80 on arc_easy (raw model, general reasoning); do NOT
+conflate the two on screen. See REPORT. -->
 
 
 Key on-screen proof to show: airplane-mode toggle, a real finding + fix,
-VS Code Problems panel, the `adtc-profiler`/8 GB no-OOM result, the
-68%→82% recall chart.
+VS Code Problems panel, the **`adtc-profiler` result — 1.84 GB peak / S_eff 74 /
+no OOM, no throttle** (straight from `submission_q3.json`), and the 68%→82%
+recall chart.
 
 ## Score projection (official formula, TPS_REFERENCE = 15.0 provisional)
 
