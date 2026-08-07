@@ -1,0 +1,85 @@
+{
+  "schema_version": "1.1.0",
+  "profiler_version": "adtc-profiler 0.1.0",
+  "submission": {
+    "team_id": "getdebug-edge",
+    "domain": "coding_assistants",
+    "language_scope": [
+      "en"
+    ],
+    "african_alpha_claim": true,
+    "budget_laptop_claim": true,
+    "submitter": {
+      "name": "Davis Nutifafa-fafa Agbetsise",
+      "email": "fafa@masenu.com",
+      "github_handle": "onfafanutifafa"
+    },
+    "cross_disciplinary_pairing": {
+      "discipline": "software_security",
+      "load_bearing": true,
+      "description": "The agent's reasoning loop (observe -> think -> act over a local codebase) applies autonomous-agent orchestration to secure-coding review, so SMEs and regulated teams (fintech, health-tech) without cloud-tooling budgets or the ability to send code off-premises can still get baseline vulnerability and correctness checks before shipping."
+    },
+    "test_prompts": [
+      {
+        "prompt_id": "tp_001",
+        "prompt": "This Python function computes the average mobile-money transaction fee for a batch of transfers in a Ghanaian savings app. It works most of the day but crashes in production every morning just after midnight, and finance says the fee totals are sometimes wrong for large batches. Find the bug(s), explain why each happens, and show the fixed code.\n\ndef batch_fee_report(transfers):\n    total_fees = 0\n    for t in transfers:\n        fee = t['amount'] * 0.01\n        if fee > 10:\n            fee == 10  # cap fee at 10 cedis\n        total_fees += fee\n    return {\n        'total': total_fees,\n        'average': total_fees / len(transfers),\n    }"
+      },
+      {
+        "prompt_id": "tp_002",
+        "prompt": "Review this Node.js Express webhook handler for a school-fees payment provider. Identify any security or correctness issues before it goes to production, and explain how you'd fix each one.\n\napp.post('/webhook/payment', (req, res) => {\n  const { studentId, amount, status } = req.body;\n  const query = `UPDATE fees SET paid = paid + ${amount} WHERE student_id = '${studentId}'`;\n  db.query(query);\n  if (status === 'success') {\n    res.send('ok');\n  }\n});"
+      }
+    ],
+    "model": {
+      "name": "getdebug-edge-3B (Qwen2.5-Coder-3B-Instruct-Q3_K_M, reviewer persona baked into chat template)",
+      "runtime": "llama.cpp",
+      "quantization": "GGUF Q3_K_M",
+      "parameters_estimate": "3B",
+      "packaging": "binary_bundle"
+    }
+  },
+  "environment": {
+    "measured_on": "participant_laptop",
+    "cpu_model": "Intel(R) Core(TM) i9-9980HK CPU @ 2.40GHz",
+    "ram_gb": 15.7,
+    "gpu": "none",
+    "os": "Debian GNU/Linux 13 (trixie)"
+  },
+  "throughput": {
+    "tokens_per_second_generation": 3.79,
+    "first_token_latency_ms": 104641.65,
+    "prompt_tokens": 512,
+    "generated_tokens": 128
+  },
+  "memory": {
+    "peak_rss_mb": 1840.21,
+    "steady_state_rss_mb": 1585.19,
+    "peak_vms_mb": 2502.73
+  },
+  "accuracy": [
+    {
+      "benchmark": "arc_easy",
+      "dataset_version": "lm-eval-harness",
+      "language": "en",
+      "samples": 50,
+      "score": 0.8,
+      "metric": "acc_norm"
+    }
+  ],
+  "cpu_thermal": {
+    "cpu_percent_p99": 51.6,
+    "core_temp_c_peak": null,
+    "throttled": false
+  },
+  "reproducibility": {
+    "git_commit_sha": "df668ca23885",
+    "docker_image_digest": "unknown",
+    "random_seed": 42
+  },
+  "model_info": {
+    "params_count": 3397103616,
+    "context_length": 32768,
+    "architecture": "qwen2",
+    "claimed_params_estimate": "3B",
+    "params_match": true
+  }
+}

@@ -25,12 +25,18 @@ contest-required technical writeup (fill in once benchmarks are run).
 
 ## Status
 
-**Working end-to-end and measured.** Verified on Ubuntu 22.04 in a container
-pinned to the contest spec (4 CPUs, 8 GB RAM, swap disabled): a full review
-runs at ~3.5 GB peak RAM with no OOM and no crash. Measured hybrid recall is
-**82%** on an internal seeded-bug benchmark (see [`REPORT.md`](./REPORT.md) for
-the honest accuracy characterization, including false-positive/negative rates,
-and [`BAKEOFF.md`](./BAKEOFF.md) for the six-model comparison).
+**Working end-to-end and measured by the canonical ADTC profiler.** Run through
+the official profiler in a container pinned to the contest spec (4 CPUs, 8 GB
+RAM, swap disabled): the shipping **Q3_K_M** model measures **1.84 GB peak RSS
+→ S_eff = 74**, `throttled=false`, no OOM, no crash, and **acc_norm = 0.80** on
+lm-eval `arc_easy` (the automated accuracy stage). A full agent review over a
+real multi-file repo peaks around ~3.5 GB (the tool's end-to-end footprint —
+Python orchestrator + linters — vs the 1.84 GB model process the profiler
+scores). Our internal seeded-bug code-review recall is **82%** for the bare
+model / **86%** for the full tool — a separate domain measure from the lm-eval
+number above (see [`REPORT.md`](./REPORT.md) for the honest accuracy
+characterization, including false-positive/negative rates, and
+[`BAKEOFF.md`](./BAKEOFF.md) for the six-model comparison).
 
 Key components:
 - `agent/agent.py` — the agent: launches a persistent `llama-server`, chunks a

@@ -66,8 +66,11 @@ for the honest accuracy characterization, including false-negative/positive rate
 ## Hardware target
 
 Built for the ADTC Standard Laptop: 8 GB RAM (7 GB budget), integrated
-graphics, CPU-only, Ubuntu 22.04. Verified under a hard 8 GB ceiling: ~3.5 GB
-peak RAM, no OOM, no crash.
+graphics, CPU-only, Ubuntu 22.04. Measured by the official ADTC profiler:
+**1.84 GB peak RSS** (S_eff = 74), `throttled=false`, no OOM, no crash. (A full
+agent review over a real multi-file repo peaks around ~3.5 GB including the
+Python orchestrator and linters — that is the tool's footprint, not the model
+process the profiler scores.)
 
 ## Base model, quantization, and reproducibility
 

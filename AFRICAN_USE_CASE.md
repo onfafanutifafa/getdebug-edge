@@ -93,9 +93,9 @@ payment webhook with an injection flaw. They are the daily texture of this work.
 
 ## 5. Built small on purpose — accessibility as a design goal
 
-getdebug-edge ships as a **3-bit quantized 3B model (~1.7 GB, ~2.6 GB RAM)**,
-chosen over a larger quant after a measured sweep specifically because smaller
-serves this user:
+getdebug-edge ships as a **3-bit quantized 3B model (~1.7 GB on disk, 1.84 GB
+peak RAM as measured by the official ADTC profiler)**, chosen over a larger
+quant after a measured sweep specifically because smaller serves this user:
 
 - **A smaller download** matters where data is metered and expensive — every
   gigabyte is real money.

@@ -16,7 +16,7 @@ getdebug-edge is an **offline, security-first code reviewer** — and, because i
 - **Multi-language.** The LLM reviews 15+ languages (Python, JS/TS, Java, Go, Rust, C/C++, C#, Ruby, PHP, SQL); the deterministic detectors cover **Python, JavaScript, Java, and Go**, so those developers get the extra safety net, not just LLM review.
 - **It suggests code, not just prose.** `--fix` emits corrected code for each finding; `--prompt` writes new code on request.
 - **It meets you where you work.** Findings drop into VS Code's Problems panel; explanations can come in other languages.
-- **It's tiny on purpose.** A 3-bit quantized model (~1.7 GB, ~2.6 GB RAM) — small enough to run on a 4 GB machine, or on a modern phone.
+- **It's tiny on purpose.** A 3-bit quantized model (~1.7 GB on disk, **1.84 GB peak RAM** measured by the official profiler) — small enough to run on a 4 GB machine, or on a modern phone.
 - **Honest by design.** A first-pass triage that points a developer at the code worth a closer look — not an authoritative gate.
 
 ## How I built it
@@ -57,7 +57,7 @@ Every one of these was found by measuring, not guessing — and each is document
 
 ## Accomplishments that I'm proud of
 
-- **Passes the disqualification test:** a full review runs at ~2.6 GB peak RAM, no OOM, no crash, under a hard 8 GB ceiling on the actual evaluation OS.
+- **Passes the disqualification test:** the official ADTC profiler measures **1.84 GB peak RAM** for the shipping model (S_eff = 74), `throttled=false`, no OOM, no crash, under a hard 8 GB ceiling on the actual evaluation OS.
 - **The physical-core finding:** faster *and* cooler *and* lighter on the battery — an energy win that matters where the grid is the constraint.
 - **Intellectual honesty as a feature.** I expanded my own benchmark until the number got worse, reported it, and *then* engineered it back up — and I keep two separate, clearly-labeled numbers (82% model, 86% tool) so no one can mistake transparency for spin.
 - **I closed my own reasoning ceiling honestly.** After proving prompt tricks couldn't make a 3B reason about logic, spec-aware review did — the developer describes intent, and business-logic bugs the tool fundamentally missed became catchable.

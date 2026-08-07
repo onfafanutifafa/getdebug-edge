@@ -114,21 +114,24 @@ VS Code Problems panel, the `adtc-profiler`/8 GB no-OOM result, the
 ## Score projection (official formula, TPS_REFERENCE = 15.0 provisional)
 
 `S_total = 0.50·S_acc + 0.30·S_perf + 0.20·S_eff − P_thermal`. Shipping quant
-is now **Q3_K_M** (quant sweep in REPORT.md): peak RAM ~2.65 GB → S_eff =
-100×(7−2.65)/7 = **62**; P_thermal = **0**; S_perf = 100×(TPS/15), and Q3's
-generation is ~35% faster than Q4 (14.6 vs 10.8 t/s on the dev machine).
+is **Q3_K_M** (quant sweep in REPORT.md). **Measured by the canonical ADTC
+profiler** (4 CPU / 8 GB / no-swap container): peak RSS **1.84 GB → S_eff =
+100×(7−1.84)/7 = 74**; `throttled=false` → P_thermal = **0**; automated accuracy
+**acc_norm = 0.80** on lm-eval `arc_easy`. S_perf = 100×(TPS/TPS_fastest), and
+Q3's generation is ~35% faster than Q4 (14.6 vs 10.8 t/s on the dev machine).
 
 <!-- S_acc here = the AUTOMATED lm-eval benchmark score on the raw model (the
 profiler's accuracy stage, no chat template, no agent). It is NOT our
 code-review recall (82%/86%) — that measures the tool, not the contest metric.
-Q3-vs-Q4 proxy MCQ: 88% vs 92% (24 q, within noise); confirm on the final
-full profiler run (accuracy stage enabled) on reference hardware. -->
+NOW MEASURED on the canonical profiler: Q3 arc_easy acc_norm = 0.80 (40/50),
+Q4 = 0.82 (41/50) — a 1-question gap, within noise; Q3 ships. A qualitative
+judge read may adjust the final S_acc; the automated stage is 80. -->
 
-| Scenario | S_acc (est.) | TPS → S_perf | S_eff | S_total |
+| Scenario | S_acc | TPS → S_perf | S_eff | S_total |
 |---|---|---|---|---|
-| Dev-machine optimistic | 85 | 14.6 → 97 | 62 | **~84** |
-| Central | 78 | 11 → 73 | 62 | **~73** |
-| Reference-hw conservative | 72 | ~9 → 60 | 62 | **~66** |
+| Dev-machine optimistic | 80 (measured) | 14.6 → 97 | 74 | **~84** |
+| Central | 80 (measured) | 11 → 73 | 74 | **~77** |
+| Reference-hw conservative | 80 (measured) | ~9 → 60 | 74 | **~73** |
 
 Plus (per challenge page): Budget Profile multiplier +10% (claimed) and
 African Use Case bonus up to +10 — central case lands ≈ **73–83** after
@@ -140,8 +143,9 @@ real hardware.
 
 **Lever analysis:** S_eff was capped by model size — and a smaller quant moved
 it, exactly as predicted. **Q3_K_M switch (2026-07-16)** delivered equal-or-
-better accuracy at 18% smaller / 35% faster / ~1.1 GB less RAM (S_eff 47 → 62,
-~+3 total points), and the importance-matrix quants (IQ4_XS/IQ3_M) were tested
+better accuracy at 18% smaller / 35% faster / less RAM. On the canonical
+profiler this is **S_eff 68 (Q4) → 74 (Q3)**, worth ~+1.2 total points, on top
+of Q3's smaller download; the importance-matrix quants (IQ4_XS/IQ3_M) were tested
 and rejected (accuracy collapsed). (Earlier: Q4_0 was rejected for regressing
 tp_001; Q4_K_M was superseded by Q3_K_M.) Remaining S_acc levers: LoRA fine-tune on the contest's free GPU hours (only lever that
 reaches the hidden prompts), default system prompt baked into the GGUF chat

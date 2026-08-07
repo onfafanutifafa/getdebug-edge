@@ -20,15 +20,23 @@ disqualification ceiling with no swap**.
 | OS / runtime | Ubuntu 22.04, llama.cpp b9975, Python 3.10.12 | contest-representative |
 | Throughput (generation) | **6.1 t/s** (tg128) | 4 threads; prebuilt generic binary understates vs a `-march=native` build |
 | Throughput (prompt) | 14.5 t/s (pp512) | 4 threads |
-| **Peak RAM (full agent run)** | **3.54 GB** | via cgroup `memory.current` sampling |
-| **OOM / crash** | **None** — `OOMKilled=false`, exit 0 | passes the disqualification condition with ~3.5 GB of headroom |
-| S_eff at this RAM | 100 × (7 − 3.54)/7 = **49.4** | matches the profiler's ~48.7 |
+| **Peak RAM (full agent run)** | **3.54 GB** | via cgroup `memory.current` sampling — **Q4_K_M-era** (2026-07-12, before the Q3 switch); the whole agent (llama-server + Python orchestrator + linters), not the model process alone |
+| **OOM / crash** | **None** — `OOMKilled=false`, exit 0 | passes the disqualification condition with comfortable headroom under 8 GB |
 | Real-repo review | 5 files, 266 s | Flask tutorial app (auth + DB + blog) |
 
-**The headline result: no OOM, no crash, 3.54 GB peak under a hard 8 GB
-ceiling.** The single most dangerous contest failure mode (out-of-memory =
-instant disqualification) is verified safe on the actual evaluation OS, with
-the whole agent (persistent llama-server + Python orchestrator) running.
+> **Note — two different RAM numbers, reconciled.** This 3.54 GB is the
+> *whole-agent* footprint on the earlier **Q4_K_M** model. The **canonical ADTC
+> profiler**, which is what the judges score for S_eff, measures the *model
+> process* under its standardized load — and on the shipping **Q3_K_M** that is
+> **1.84 GB → S_eff = 74** (`throttled=false`; see REPORT.md). So the contest
+> S_eff figure is 74, not the 49 this legacy full-agent Q4 run would imply; the
+> two measure different scopes and different quants.
+
+**The headline result: no OOM, no crash under a hard 8 GB ceiling** — even the
+heavier full-agent Q4 run at 3.54 GB stayed safe. The single most dangerous
+contest failure mode (out-of-memory = instant disqualification) is verified safe
+on the actual evaluation OS, with the whole agent (persistent llama-server +
+Python orchestrator) running.
 
 ## Real-repo case study — and an honest limitation
 
