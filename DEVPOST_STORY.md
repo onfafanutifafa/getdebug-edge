@@ -76,7 +76,7 @@ Every one of these was found by measuring, not guessing — and each is document
 - **Independent validation** against a larger, real ground-truth set (public SAST benchmarks, or my own CodeSecBench) to firm up the accuracy numbers.
 - **Close the last reasoning gaps** (access control / IDOR) with lightweight authorization-flow analysis.
 - **A mobile version** — the model already fits on a phone; the tooling around it is next.
-- **Wider language reach** for finding explanations via offline translation, honestly.
+- **Wider language reach** for finding explanations via offline translation. I researched and tested the African-NLP ecosystem (Masakhane, Lelapa AI, and others): **InkubaLM-0.4B** is the one that fits our stack (GGUF, runs in llama.cpp, covers Yoruba/Hausa/Swahili/isiZulu/isiXhosa), but as a base model it can't translate out of the box — so it's a **fine-tune candidate**: train it for finding-translation, ship it as GGUF, and validate on AfroBench. That's the honest path to real local-language support, built on African-made models.
 - Keep it **free and open-source**, so the developers who need it most never hit a paywall.
 
 ---
