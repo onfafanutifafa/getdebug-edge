@@ -1,7 +1,10 @@
 # African Use Case — why getdebug-edge, why here
 
-*Backing document for the `african_alpha_claim` in `metadata.json` and the
-Best African Use Case consideration.*
+*Backing document for the **African Use Case** bonus (a solution that caters to
+real-world African contexts and infrastructure). Note: this is distinct from
+`african_alpha_claim` in `metadata.json`, which is the **African-Language**
+(+15%) claim — set to `false`, because the tool ships English-only (indigenous
+African-language output degenerates on a 3B; see REPORT §7b / SCOPE §9).*
 
 > **How to use the citation slots.** Every specific statistic below is marked
 > `⟦CITE: what to find │ suggested source⟧`. Replace each with a real, sourced
