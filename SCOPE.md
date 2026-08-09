@@ -52,7 +52,7 @@ riskier place to be judged on raw accuracy.
 |---|---|---|
 | Model | Qwen2.5-Coder-3B-Instruct | Qwen2.5-Coder-1.5B-Instruct |
 | Quantization | GGUF Q4_K_M (~2.1 GB) | GGUF Q4_K_M (~1.0 GB) |
-| Why | Strongest code-task benchmarks at this size class; official GGUF releases; active llama.cpp support | Use if TPS on target hardware misses the reference (15 TPS) or RAM headroom is too tight once agent overhead is added |
+| Why | Strongest code-task benchmarks at this size class; official GGUF releases; active llama.cpp support | Use if TPS on target hardware is uncompetitively low (~15 TPS is a rough planning target, not an official bar — S_perf is relative to the fastest submission) or RAM headroom is too tight once agent overhead is added |
 
 Runtime is fixed by the contest rules: **llama.cpp only**, GGUF weights only.
 
@@ -89,7 +89,8 @@ persistent rather than reloading per chunk.
 
 1. Run `adtc-profiler run --mode participant --skip-accuracy` locally before every
    submission to catch RAM/latency regressions early.
-2. Track: tokens/sec generation (target ≥15 TPS reference), peak RSS (<7 GB),
+2. Track: tokens/sec generation (~15 TPS is a rough self-check target, not the
+   official bar — S_perf is relative to the fastest submission), peak RSS (<7 GB),
    first-token latency, thermal behavior over a sustained run.
 3. Write the 2 required `test_prompts` as realistic African-context debugging tasks
    (see `metadata.json` — draft prompts included, refine before submission).
