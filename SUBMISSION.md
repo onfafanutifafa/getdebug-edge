@@ -115,14 +115,24 @@ VS Code Problems panel, the **`adtc-profiler` result — 1.84 GB peak / S_eff 74
 no OOM, no throttle** (straight from `submission_q3.json`), and the 68%→82%
 recall chart.
 
-## Score projection (official formula, TPS_REFERENCE = 15.0 provisional)
+## Score projection (official formula; S_perf is relative to the fastest submission — unknowable pre-audit)
 
 `S_total = 0.50·S_acc + 0.30·S_perf + 0.20·S_eff − P_thermal`. Shipping quant
 is **Q3_K_M** (quant sweep in REPORT.md). **Measured by the canonical ADTC
 profiler** (4 CPU / 8 GB / no-swap container): peak RSS **1.84 GB → S_eff =
 100×(7−1.84)/7 = 74**; `throttled=false` → P_thermal = **0**; automated accuracy
-**acc_norm = 0.80** on lm-eval `arc_easy`. S_perf = 100×(TPS/TPS_fastest), and
-Q3's generation is ~35% faster than Q4 (14.6 vs 10.8 t/s on the dev machine).
+**acc_norm = 0.80** on lm-eval `arc_easy`, reported in `submission.json`'s
+top-level `accuracy[]` block (auto-populated by a full participant run).
+
+**S_perf = 100×(TPSact ÷ TPSmax)** where `TPSmax` = the fastest submission's
+tokens/sec and `TPSact` is measured *during the judges' audit* on the ADTC
+Standard Laptop — the **official rule, verified 2026-08-09** on
+[africadeeptech.org/challenge-2026](https://africadeeptech.org/challenge-2026/)
+(it is **relative to the fastest team, NOT a fixed 15-TPS reference** — the
+profiler README's `TPS_REFERENCE=15.0` is a local self-check simplification and
+does not govern). So S_perf **cannot be computed until all submissions are in**;
+the projections below assume a placeholder `TPSmax ≈ 15` purely for illustration.
+For context, Q3's generation is ~35% faster than Q4 (14.6 vs 10.8 t/s dev machine).
 
 <!-- S_acc here = the AUTOMATED lm-eval benchmark score on the raw model (the
 profiler's accuracy stage, no chat template, no agent). It is NOT our
@@ -131,16 +141,22 @@ NOW MEASURED on the canonical profiler: Q3 arc_easy acc_norm = 0.80 (40/50),
 Q4 = 0.82 (41/50) — a 1-question gap, within noise; Q3 ships. A qualitative
 judge read may adjust the final S_acc; the automated stage is 80. -->
 
-| Scenario | S_acc | TPS → S_perf | S_eff | S_total |
+| Scenario | S_acc | TPS → S_perf *(illustrative, TPSmax≈15 placeholder)* | S_eff | S_total |
 |---|---|---|---|---|
 | Dev-machine optimistic | 80 (measured) | 14.6 → 97 | 74 | **~84** |
 | Central | 80 (measured) | 11 → 73 | 74 | **~77** |
 | Reference-hw conservative | 80 (measured) | ~9 → 60 | 74 | **~73** |
 
+*S_perf column is illustrative only:* the real `TPSmax` is the fastest submission's
+speed and is unknown until judging. If a tiny-model entry sets a very high `TPSmax`,
+every 3B entry's S_perf compresses — a structural ceiling on the 30% axis we accept
+to protect the 50% accuracy axis.
+
 Plus (per challenge page): Budget Profile multiplier +10% (claimed) and
 African Use Case bonus up to +10 — central case lands ≈ **73–83** after
-multiplier/bonus. S_acc estimates are guesses until judged; everything else is
-measured. Note: generation TPS is memory-bandwidth-bound and the reference
+multiplier/bonus. S_acc's **automated half is measured (80)**; its **qualitative
+judge-panel half** and S_perf's `TPSmax` are the only unknowns until judging —
+S_eff and P_thermal are measured. Note: generation TPS is memory-bandwidth-bound and the reference
 i5's DDR4 bandwidth is close to the dev machine's, so the reference-hardware
 TPS drop may be smaller than the core-count difference suggests — verify on
 real hardware.
