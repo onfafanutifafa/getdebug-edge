@@ -1,0 +1,174 @@
+{
+  "model": "getdebug-edge-3b-q3_k_m.gguf",
+  "config": "hybrid (model+detectors)",
+  "files": {
+    "db_reports.py": {
+      "findings": 7,
+      "caught": {
+        "sql_injection": true,
+        "empty_list_crash": false
+      },
+      "false_positives": 0,
+      "response_excerpt": "### File Overview and Potential Issues\n\nThe `db_reports.py` file contains two functions: `get_student_fees` and `top_scorer`. The `get_student_fees` function retrieves all fees records for a given student ID from the database, while the `top_scorer` function finds the top scorer from a list of scores.\n\n### Potential Issues\n\n1. **SQL Injection**: The SQL query in `get_student_fees` uses string conc"
+    },
+    "backup_tool.py": {
+      "findings": 1,
+      "caught": {
+        "command_injection": true,
+        "hardcoded_secret": true
+      },
+      "false_positives": 0,
+      "response_excerpt": "### Brief Overview and Potential Issues\n\nThe `backup_tool.py` file contains two functions: `backup_database`, which uses the `os.system` function to execute a command that dumps a PostgreSQL database to a file, and `charge`, which calls an API to charge a client with a specified amount using a secret key.\n\n- **Potential Issue**: The `backup_database` function concatenates user input (`name`) direc"
+    },
+    "upload_handler.js": {
+      "findings": 2,
+      "caught": {
+        "path_traversal": true,
+        "unhandled_error": true
+      },
+      "false_positives": 0,
+      "response_excerpt": "### File Overview and Potential Issues\n\nThe `upload_handler.js` file defines a function `readUserFile` that reads a user's file from the server's `/var/uploads/` directory based on the filename provided in the query parameters. This function is intended to be used by an HTTP request handler, likely part of a web application.\n\n### Potential Issues\n\n1. **Injection**: The code concatenates the `filen"
+    },
+    "wallet.py": {
+      "findings": 3,
+      "caught": {
+        "weak_hash": true,
+        "negative_percent": false,
+        "empty_people_crash": true
+      },
+      "false_positives": 0,
+      "response_excerpt": "### File: wallet.py\n\nThis file contains functions related to handling user pins and splitting bills. The `hash_pin` function hashes a pin using MD5, which is not recommended for security purposes due to its vulnerabilities. The `apply_discount` function calculates the discount on a balance based on a percentage, ensuring that the percentage does not exceed 100. The `split_bill` function calculates"
+    },
+    "sms_notify.js": {
+      "findings": 2,
+      "caught": {
+        "off_by_one": true
+      },
+      "false_positives": 0,
+      "response_excerpt": "### Code Overview and Potential Issues\n\nThe `sms_notify.js` file defines two functions: `sendBulk` and `send`. The `sendBulk` function iterates over an array of numbers and calls the `send` function for each number, passing the number and a message as arguments. The `send` function checks if the number is truthy before making an API call to send an SMS.\n\n### Findings\n\n1. **Injection**: The `send` "
+    },
+    "jwt_auth.py": {
+      "findings": 2,
+      "caught": {
+        "hardcoded_jwt_secret": true,
+        "no_expiry_verification": true
+      },
+      "false_positives": 0,
+      "response_excerpt": "### Brief Overview and Potential Issues\n\nThe `jwt_auth.py` file contains functions to create and verify JSON Web Tokens (JWTs). The JWT is created by encoding a dictionary containing the user ID with a secret key using the HMAC-SHA256 algorithm. The verification function decodes the token using the same secret key and verifies its signature.\n\n### Findings\n\n- **NO_ISSUES**\n\nThis file does not conta"
+    },
+    "crypto_store.py": {
+      "findings": 2,
+      "caught": {
+        "ecb_mode": true,
+        "hardcoded_key": true
+      },
+      "false_positives": 0,
+      "response_excerpt": "### File Overview and Potential Issues\n\nThe `crypto_store.py` file contains a function `encrypt` that uses the AES encryption algorithm from the `Crypto.Cipher` module to encrypt data using a fixed key. The key is defined as a byte string `b\"0123456789abcdef\"`.\n\n### Findings\n\n- **high**: Injection (line ~1) \u2014 The function uses a hardcoded key, which is not secure for cryptographic purposes. Fix: U"
+    },
+    "order_api.js": {
+      "findings": 0,
+      "caught": {
+        "idor": false
+      },
+      "false_positives": 0,
+      "response_excerpt": "### Code Overview and Potential Issues\n\nThe provided code snippet defines an endpoint `/api/order/:id` that retrieves an order by its ID from the database using the `Order.findById` method. This is a common pattern in RESTful APIs where the server fetches data based on a unique identifier.\n\n### Findings\n\n- **NO_ISSUES**\n\nThis chunk of code does not contain any real issues related to injection, edg"
+    },
+    "login.py": {
+      "findings": 3,
+      "caught": {
+        "password_logging": true,
+        "plaintext_compare": true
+      },
+      "false_positives": 0,
+      "response_excerpt": "### Code Overview and Potential Issues\n\nThe `login` function in `login.py` is designed to authenticate a user by checking their credentials against the database. It logs the attempt with the username and password, retrieves the hashed password from the database for the given username, and compares it with the provided password.\n\n**Potential Issues:**\n\n1. **SQL Injection**: The SQL query uses strin"
+    },
+    "redirect.js": {
+      "findings": 0,
+      "caught": {
+        "open_redirect": true
+      },
+      "false_positives": 0,
+      "response_excerpt": "### Code Overview and Potential Issues\n\nThe code snippet provided is a simple Express.js route that handles GET requests to the `/go` endpoint. It redirects the user to the URL specified in the query parameter `url`. This is a straightforward operation but could potentially lead to issues if the input is not validated or sanitized.\n\n### Findings\n\n1. **Injection**: The code uses string concatenatio"
+    },
+    "xml_loader.py": {
+      "findings": 0,
+      "caught": {
+        "xxe": true
+      },
+      "false_positives": 0,
+      "response_excerpt": "### File: xml_loader.py (chunk 1/1)\n\nThis code imports the `lxml.etree` module and defines a function `parse` that takes XML bytes as input and returns an ElementTree object. The function uses `ET.XMLParser(resolve_entities=True, no_network=False)` to create a parser with entity resolution enabled and network access disabled.\n\n### Findings\n\n- **NO_ISSUES**"
+    },
+    "token.js": {
+      "findings": 0,
+      "caught": {
+        "weak_random": true
+      },
+      "false_positives": 0,
+      "response_excerpt": "### Code Overview and Potential Issues\n\nThe `resetToken` function generates a random token by converting the result of `Math.random()` to a base-36 string and then taking a substring from the 2nd character to the 10th character. This is typically used for generating unique tokens, such as session IDs or API keys.\n\n### Findings\n\nNO_ISSUES"
+    },
+    "inventory.py": {
+      "findings": 0,
+      "caught": {
+        "missing_qty_check": true,
+        "off_by_one_loop": false
+      },
+      "false_positives": 0,
+      "response_excerpt": "### File: inventory.py\n\nThis file contains two functions related to managing an inventory system:\n\n1. **`reserve(stock, sku, qty)`**: This function reserves a specified quantity of items for a given SKU (Stock Keeping Unit) from the stock dictionary. It checks if there are enough items in stock before decrementing the count.\n\n2. **`restock_all(items)`**: This function calculates the total number o"
+    },
+    "geo_utils.py": {
+      "findings": 0,
+      "caught": {},
+      "false_positives": 0,
+      "response_excerpt": "### Brief Overview and Potential Issues\n\nThe `haversine_km` function calculates the great-circle distance between two points on the Earth's surface given their latitude and longitude in kilometers. This is useful for applications like navigation or mapping. The function uses the Haversine formula, which is a well-known method for this calculation.\n\n### Findings\n\n- **NO_ISSUES**\n\nThis file does not"
+    },
+    "currency.js": {
+      "findings": 0,
+      "caught": {},
+      "false_positives": 0,
+      "response_excerpt": "### Code Overview and Potential Issues\n\nThe `currency.js` file defines a function `toGhs` that converts an amount from a specified currency to Ghanaian Cedis (GHS). The conversion is based on predefined exchange rates stored in the `RATES` object. The function checks if the provided currency is supported by looking up its rate in the `RATES` object and throws an error if it's not.\n\n### Findings\n\n1"
+    },
+    "temp_convert.py": {
+      "findings": 0,
+      "caught": {},
+      "false_positives": 0,
+      "response_excerpt": "### File: temp_convert.py\n\nThis file contains two functions for converting temperatures between Celsius and Fahrenheit. The `c_to_f` function multiplies the input Celsius temperature by 9/5 and adds 32 to convert it to Fahrenheit. The `f_to_c` function subtracts 32 from the input Fahrenheit temperature, multiplies by 5/9, and then converts it back to Celsius.\n\n### Findings\n\n- NO_ISSUES"
+    },
+    "money_decimal.py": {
+      "findings": 0,
+      "caught": {},
+      "false_positives": 0,
+      "response_excerpt": "### Code Overview and Potential Issues\n\nThe `add_vat` function takes two parameters: `price_minor`, which is an integer representing the price in minor units (e.g., cents), and `rate`, which is a decimal representing the VAT rate. The function calculates the total price including VAT by multiplying the price by `(1 + rate)` and then converting the result back to an integer.\n\n### Findings\n\n- **NO_I"
+    },
+    "retry_backoff.js": {
+      "findings": 0,
+      "caught": {},
+      "false_positives": 0,
+      "response_excerpt": "### Code Overview and Potential Issues\n\nThe `withRetry` function is an asynchronous utility that retries a given function (`fn`) up to a maximum number of attempts (`max`). If the function fails, it waits for a backoff period before retrying. The backoff period starts at 2 seconds and doubles with each subsequent attempt.\n\n### Findings\n\n1. **High Severity**: Injection (line ~4) - The code does not"
+    },
+    "safe_slice.py": {
+      "findings": 0,
+      "caught": {},
+      "false_positives": 0,
+      "response_excerpt": "### Code Overview and Potential Issues\n\nThe `last_n` function takes a list `items` and an integer `n`, returning the last `n` elements of the list. If `n` is less than or equal to zero, it returns an empty list.\n\n### Findings\n\n- **NO_ISSUES**\n\nThis code does not contain any real issues related to injection, edge cases, input validation, error handling, logic errors, weak cryptography, duplication,"
+    },
+    "bcrypt_hash.py": {
+      "findings": 2,
+      "caught": {},
+      "false_positives": 2,
+      "response_excerpt": "### File Overview and Potential Issues\n\nThe `bcrypt_hash.py` file contains two functions: `hash_password` and `check_password`. These functions are designed to hash passwords using the bcrypt algorithm, which is a widely used library for password hashing in Python.\n\n- **Potential Issues**:\n  - The functions do not handle exceptions that might occur during the hashing process. This could lead to un"
+    },
+    "slugify.js": {
+      "findings": 0,
+      "caught": {},
+      "false_positives": 0,
+      "response_excerpt": "### Code Overview and Potential Issues\n\nThe `slugify` function takes a string as input, converts it to lowercase, trims any leading or trailing whitespace, replaces sequences of non-alphanumeric characters with hyphens, and removes any leading or trailing hyphens. This is useful for creating URL-friendly slugs from human-readable text.\n\n### Findings\n\n- **NO_ISSUES**\n\nThis code does not contain any"
+    }
+  },
+  "summary": {
+    "recall": 0.818,
+    "bugs_caught": 18,
+    "bugs_total": 22,
+    "false_positives_on_clean": 2,
+    "seconds": 632.6
+  }
+}

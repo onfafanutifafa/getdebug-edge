@@ -27,12 +27,12 @@ contest-required technical writeup (fill in once benchmarks are run).
 
 **Working end-to-end and measured by the canonical ADTC profiler.** Run through
 the official profiler in a container pinned to the contest spec (4 CPUs, 8 GB
-RAM, swap disabled): the shipping **Q3_K_M** model measures **1.84 GB peak RSS
-→ S_eff = 74**, `throttled=false`, no OOM, no crash, and **acc_norm = 0.80** on
+RAM, swap disabled): the shipping **Q4_K_M** model measures **2.21 GB peak RSS
+→ S_eff = 68**, `throttled=false`, no OOM, no crash, and **acc_norm = 0.82** on
 lm-eval `arc_easy` (the automated accuracy stage). A full agent review over a
 real multi-file repo peaks around ~3.5 GB (the tool's end-to-end footprint —
-Python orchestrator + linters — vs the 1.84 GB model process the profiler
-scores). Our internal seeded-bug code-review recall is **82%** for the bare
+Python orchestrator + linters — vs the 2.21 GB model process the profiler
+scores). Our internal seeded-bug code-review recall is **68%** for the bare
 model / **86%** for the full tool — a separate domain measure from the lm-eval
 number above (see [`REPORT.md`](./REPORT.md) for the honest accuracy
 characterization, including false-positive/negative rates, and
@@ -143,7 +143,7 @@ suggested fixes (`--target`), and answers one-off debugging questions
 getdebug-edge has **two** measured recall numbers, because there are two ways to
 run it, and we state both plainly so there's no ambiguity:
 
-- **The model alone — 82%** (18/22 seeded bugs). The bare GGUF answering prompts
+- **The model alone — 68%** (15/22 seeded bugs). The bare GGUF answering prompts
   with the review methodology baked into its chat template, *no harness*. This
   is what a contest judge scores when they run the model directly.
 - **The full tool — 86%** (19/22). Adds the agent's deterministic detectors
@@ -158,7 +158,7 @@ The gap is by design — it reflects what can and can't live *inside the model*
 | Review methodology & instructions | Deterministic regex detectors (run at review time) |
 | The behavior to *look for* secrets, MD5, injection | The regex's deterministic *guarantee* (fires every time, no hallucination) |
 | The capability to check code against a spec | Your project's specific `SPEC.md` (per-project data) |
-| **→ this is the 82% a judge scores** | **→ this is what lifts it to 86% + logic bugs** |
+| **→ this is the 68% a judge scores** | **→ this is what lifts it to 86% + logic bugs** |
 
 In short: *instructions and behaviors* bake into the model; *executable code and
 per-project data* stay in the tool. The base weights are unchanged from
@@ -190,7 +190,7 @@ and **augmented** it (detectors + spec), not smarter. See
   false-positive rate on adversarial safe code** — which is why it's a
   first-pass triage, not an authoritative gate. See REPORT.md.
 - **Latency.** CPU inference is inherently slower than cloud. Levers: `--diff`,
-  the result cache, the small Q3 model, physical-core threading. It's a
+  the result cache, the small Q4 model, physical-core threading. It's a
   pre-commit reviewer, not a real-time linter.
 
 ## Why this exists — and who is behind it

@@ -1,8 +1,8 @@
 # Reference-hardware run — do this on the i5 Ubuntu laptop
 
 This is the **last missing measurement** before submission. Everything else is
-locked from the Docker profiler run: accuracy `acc_norm 0.80` (arc_easy), peak
-RAM `1.84 GB → S_eff 74`, no OOM. Those are **hardware-independent**. What still
+locked from the Docker profiler run: accuracy `acc_norm 0.82` (arc_easy), peak
+RAM `2.21 GB → S_eff 68`, no OOM. Those are **hardware-independent**. What still
 needs *real target hardware* is the two things a virtualized Mac container can't
 measure honestly:
 
@@ -37,8 +37,8 @@ sudo cp llama.cpp/build/bin/llama-bench llama.cpp/build/bin/llama-server /usr/lo
 sudo sensors-detect --auto
 sensors            # sanity: you should see Core 0…N temperatures
 
-# 3. Make sure the shipping model is present (~1.7 GB)
-bash download_model.sh 3b        # skip if model/getdebug-edge-3b-q3_k_m.gguf exists
+# 3. Make sure the shipping model is present (~2.1 GB)
+bash download_model.sh 3b        # skip if model/getdebug-edge-3b-q4_k_m.gguf exists
 
 # 4a. Native benchmark — real TPS + auto thermal capture + throttle detection
 bash bench_i5.sh

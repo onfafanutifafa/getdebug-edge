@@ -2,7 +2,7 @@
 
 **Contest:** Africa Deep Tech Challenge 2026 — Laptop LLM Challenge
 **Gate 1 deadline:** Aug 25, 2026 @ 11:45pm PDT
-**Status:** pre-registration scoping (not yet a registered team_id)
+**Status:** registered — team_id `getdebug-edge` on the ADTF portal; repo public.
 
 ## 1. Problem
 
@@ -56,9 +56,10 @@ riskier place to be judged on raw accuracy.
 
 Runtime is fixed by the contest rules: **llama.cpp only**, GGUF weights only.
 
-Note: Qwen2.5 models ship under the "qwen-research" license on this GGUF repo —
-worth re-checking the exact license terms before final submission, since some Qwen
-license variants restrict certain commercial uses. Flagging so it isn't missed later.
+Note: Qwen2.5-Coder-3B ships under the **Qwen Research License** — VERIFIED
+2026-08-09 as **non-commercial (research/evaluation) only** (not Apache-2.0, unlike
+the 1.5B/7B). Contest hosting is compliant with attribution; commercial downstream
+needs a Qwen license or an Apache-2.0 model swap. See the README License section.
 
 ## 5. Architecture
 
@@ -142,7 +143,7 @@ specific contest scores and disqualifies submissions.
 Concretely, `agent/agent.py` now runs:
 
 ```
-llama-server -m model/getdebug-edge-3b-q3_k_m.gguf \
+llama-server -m model/getdebug-edge-3b-q4_k_m.gguf \
   --ctx-size 3072 --threads <physical-cores> --threads-batch <physical-cores> \
   --batch-size 512 --cache-type-k q8_0 --cache-type-v q8_0 \
   --n-gpu-layers 0 --host 127.0.0.1 --port 0

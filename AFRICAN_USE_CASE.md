@@ -84,7 +84,7 @@ the ADTC Standard Laptop profile — getdebug-edge is a pre-commit safety net:
   the unvalidated input, the missing guard, the hardcoded secret — each with a
   suggested fix, and, when the developer supplies a `SPEC.md`, business-logic
   bugs checked against intended behavior.
-- It runs **during** an outage. It costs **nothing** after a one-time ~1.7 GB
+- It runs **during** an outage. It costs **nothing** after a one-time ~2.1 GB
   download. The code **never leaves the room**, so the data-residency question
   never arises.
 - Findings appear in VS Code's Problems panel — inside the tools teams already
@@ -96,9 +96,11 @@ payment webhook with an injection flaw. They are the daily texture of this work.
 
 ## 5. Built small on purpose — accessibility as a design goal
 
-getdebug-edge ships as a **3-bit quantized 3B model (~1.7 GB on disk, 1.84 GB
-peak RAM as measured by the official ADTC profiler)**, chosen over a larger
-quant after a measured sweep specifically because smaller serves this user:
+getdebug-edge ships as a **4-bit quantized 3B model (~2.1 GB on disk, 2.21 GB
+peak RAM as measured by the official ADTC profiler)**, with an even lighter
+**Q3_K_M** build (~1.7 GB, selectable via `--model`) available for the most
+memory-constrained machines. Every size choice here was made with this user in
+mind — the tool stays small and offline-first whichever build you run:
 
 - **A smaller download** matters where data is metered and expensive — every
   gigabyte is real money.

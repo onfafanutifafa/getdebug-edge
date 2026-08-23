@@ -16,7 +16,7 @@ getdebug-edge is an **offline, security-first code reviewer** — and, because i
 - **Multi-language.** The LLM reviews 12 languages across 16 file types (Python, JS/TS/JSX/TSX, Java, Go, Rust, C/C++, C#, Ruby, PHP, SQL); the deterministic detectors cover **Python, JavaScript, Java, and Go**, so those developers get the extra safety net, not just LLM review.
 - **It suggests code, not just prose.** `--fix` emits corrected code for each finding; `--prompt` writes new code on request.
 - **It meets you where you work.** Findings drop into VS Code's Problems panel; explanations can come in other languages.
-- **It's tiny on purpose.** A 3-bit quantized model (~1.7 GB on disk, **1.84 GB peak RAM** measured by the official profiler) — small enough to run on a 4 GB machine, or on a modern phone.
+- **It's tiny on purpose.** A 4-bit quantized model (~2.1 GB on disk, **2.21 GB peak RAM** measured by the official profiler) — small enough to run on a 4 GB machine, or on a modern phone.
 - **Honest by design.** A first-pass triage that points a developer at the code worth a closer look — not an authoritative gate.
 
 ## How I built it
@@ -24,8 +24,8 @@ getdebug-edge is an **offline, security-first code reviewer** — and, because i
 Every decision was measured, not assumed:
 
 - **Model:** I benchmarked **six** open models head-to-head (Qwen2.5-Coder-3B/1.5B, Qwen3-4B, Gemma-3-4B, Llama-3.2-3B, DeepSeek-Coder, GLM-Edge). Qwen2.5-Coder-3B won on accuracy-per-resource.
-- **Quantization:** a measured sweep across Q4/Q3/IQ quants chose **Q3_K_M** — smaller, faster, and lighter on RAM than Q4 at equal-or-better accuracy.
-- **The model, focused.** I baked the review methodology (analyze-first, the vulnerability checklist, the output format) into the model's chat template — so the bare model behaves as a security reviewer with no external harness. That alone took bare-model recall from 68% to 82%.
+- **Quantization:** a measured sweep across Q4/Q3/IQ quants chose **Q4_K_M** — because the contest scores the *bare model*, and Q4 leads it (arc_easy 0.82 vs Q3's 0.80, and model-only code-review recall 68% vs 59%). Q3_K_M stays selectable as the lighter, low-RAM alternative.
+- **The model, focused.** I baked the review methodology (analyze-first, the vulnerability checklist, the output format) into the model's chat template — so the bare model behaves as a security reviewer with no external harness, catching 68% of the seeded bugs a judge would score.
 - **The model, augmented.** Deterministic detectors (across Python, JS, Java, and Go) and spec-aware checking wrap the model to catch what it misses — lifting the full tool to 86%, plus business-logic bugs.
 - **Engineering for the box:** persistent llama-server (model loaded once), physical-core threading, KV-cache quantization, prompt/result caching, deterministic decoding.
 - **A measurement harness** (a seeded-bug eval) gated every single change, and I verified the whole thing on real Ubuntu under a hard 8 GB ceiling.
@@ -45,24 +45,24 @@ Every decision was measured, not assumed:
 - **Fine-tuning made the model *worse* — twice.** Two LoRA runs on a free Colab T4 both regressed accuracy: the first taught it to stop after one finding, the second overfit to my templated data and started answering "no issues" on obviously buggy code. My own eval harness caught it, and I made the hard call to ship the base model, not the fine-tune.
 - **The obvious performance setting was a trap.** Using all CPU threads was *slower* than using fewer, and hot enough to trip the thermal penalty — the exact opposite of intuition. Physical-core threading turned out to be ~25% faster *and* ~27 °C cooler.
 - **My own accuracy number flattered me.** A 10-sample test showed 80%; expanding it to a size that actually means something dropped it to a truthful 68%. I published the lower number.
-- **The 3B has a hard reasoning ceiling.** When I tried to prompt it into catching business-logic bugs by adding reasoning cues, accuracy went *down*, not up (82% → 73%) — proof you can't prompt a small model into reasoning it can't do. (The fix came later, from a different angle: letting the developer supply the intent via a spec.)
+- **The 3B has a hard reasoning ceiling.** When I tried to prompt it into catching business-logic bugs by adding reasoning cues, accuracy went *down*, not up — proof you can't prompt a small model into reasoning it can't do. (The fix came later, from a different angle: letting the developer supply the intent via a spec.)
 - **The model over-flags clean code** — it called a correctly-parameterized query "SQL injection." False positives are real at this size, and I report the rate openly.
-- **Not everything can live in the model.** The detectors are executable code and per-project specs are runtime data — neither can be baked into the weights. Only *instructions* bake in. That forced an honest split I document plainly: the bare model a judge scores (82%) and the full tool a developer runs (86%) are two different numbers.
+- **Not everything can live in the model.** The detectors are executable code and per-project specs are runtime data — neither can be baked into the weights. Only *instructions* bake in. That forced an honest split I document plainly: the bare model a judge scores (68%) and the full tool a developer runs (86%) are two different numbers.
 - **The model kept finding ways to misbehave.** Given a terse prompt it took the "no issues" escape hatch and skipped a real SQL injection; at nonzero temperature it produced different output formats run-to-run that broke my findings parser; greedy decoding sent it into repetition loops.
 - **Infrastructure bit back constantly.** A single stray apostrophe in the baked chat template broke the server at startup. A fixed network port silently collided with another app, so the agent "reviewed" code against a server that wasn't even running the model. A read-only test mount made the linter error out, and that error text got reported as a phantom bug. Free Colab sessions recycled mid-work and 2 GB downloads stalled near completion.
 - **African-language support collapsed beyond Swahili.** Probing Hausa, Yoruba, Amharic, and Twi, the small models degenerated or answered in the wrong language — closing off a +15% language-bonus path I could not claim honestly.
-- **Compression had a surprise.** The importance-matrix quants that *should* have been most efficient unexpectedly collapsed in accuracy; only a measured sweep revealed that the plain Q3_K_M was the real winner.
+- **Compression had a surprise.** The importance-matrix quants that *should* have been most efficient unexpectedly collapsed in accuracy; only a measured sweep revealed that a plain K-quant (Q4_K_M) was the real winner.
 
 Every one of these was found by measuring, not guessing — and each is documented in the repo with the data behind it.
 
 ## Accomplishments that I'm proud of
 
-- **Passes the disqualification test:** the official ADTC profiler measures **1.84 GB peak RAM** for the shipping model (S_eff = 74), `throttled=false`, no OOM, no crash, under a hard 8 GB ceiling on the actual evaluation OS.
+- **Passes the disqualification test:** the official ADTC profiler measures **2.21 GB peak RAM** for the shipping model (S_eff = 68), `throttled=false`, no OOM, no crash, under a hard 8 GB ceiling on the actual evaluation OS.
 - **The physical-core finding:** faster *and* cooler *and* lighter on the battery — an energy win that matters where the grid is the constraint.
-- **Intellectual honesty as a feature.** I expanded my own benchmark until the number got worse, reported it, and *then* engineered it back up — and I keep two separate, clearly-labeled numbers (82% model, 86% tool) so no one can mistake transparency for spin.
+- **Intellectual honesty as a feature.** I expanded my own benchmark until the number got worse, reported it, and *then* engineered it back up — and I keep two separate, clearly-labeled numbers (68% model, 86% tool) so no one can mistake transparency for spin.
 - **I closed my own reasoning ceiling honestly.** After proving prompt tricks couldn't make a 3B reason about logic, spec-aware review did — the developer describes intent, and business-logic bugs the tool fundamentally missed became catchable.
 - **I refused to ship a regression** even after investing in the fine-tune path, because a security tool that invents or misses bugs is worse than one honest about its limits.
-- **Truly offline, zero-dependency, and tiny** — Python standard library only, one ~1.7 GB download, small enough for a 4 GB machine.
+- **Truly offline, zero-dependency, and tiny** — Python standard library only, one ~2.1 GB download, small enough for a 4 GB machine.
 
 ## What I learned
 

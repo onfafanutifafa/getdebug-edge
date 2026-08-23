@@ -3,7 +3,7 @@
 Turnkey plan for **narrating + screen-recording yourself**. Target length **≤ 2:00**
 (hard cap). The v3 script text lives in `SUBMISSION.md` (§"2-minute video script");
 this file maps each line to an exact on-screen action + command + timing, using
-only demo beats that are **proven to work reliably on the shipping Q3 model**.
+only demo beats that are **proven to work reliably on the shipping Q4 model**.
 
 ---
 
@@ -28,7 +28,7 @@ only demo beats that are **proven to work reliably on the shipping Q3 model**.
       Problems panel cleared (View → Problems, or `Cmd+Shift+M`).
 - [ ] **Airplane mode ON** (or Wi-Fi visibly off) — this is the whole thesis; show it.
 - [ ] Close Slack/email/other apps (clean screen + lower RAM = cooler run).
-- [ ] Have `submission_q3.json` open in a tab for the proof shot (RAM / accuracy / no-throttle).
+- [ ] Have `submission_q4.json` open in a tab for the proof shot (RAM / accuracy / no-throttle).
 - [ ] The demo file's `sk_live_...` key is **fake** — safe to show on camera.
 
 ---
@@ -70,13 +70,13 @@ only demo beats that are **proven to work reliably on the shipping Q3 model**.
 
 ### 1:05–1:40 · Engineering  (cutaways to charts / terminal)
 - **Narrate:** *"Everything is tuned to an 8-gigabyte, CPU-only budget. I benchmarked
-  six open models, ship a 3-bit quantization, and found that using physical cores
+  six open models, ship a 4-bit quantization, and found that using physical cores
   instead of hyperthreads made it 25% faster AND 27 degrees cooler — an energy win
-  where the grid is the constraint. The contest's own profiler confirms it: just 1.8
+  where the grid is the constraint. The contest's own profiler confirms it: just 2.2
   gigabytes of RAM, no crash, no throttling."*
 - **On screen (pick 2–3):**
-  - `submission_q3.json` — highlight `memory.peak_rss_mb: 1840`, `cpu_thermal.throttled: false`,
-    `accuracy … 0.80`.
+  - `submission_q4.json` — highlight `memory.peak_rss_mb: 2209`, `cpu_thermal.throttled: false`,
+    `accuracy … 0.82`.
   - `BAKEOFF.md` table (six models) or `REPORT.md` quant-sweep table.
   - Optional: the physical-core vs all-threads numbers from `SCOPE.md` (14.7 t/s @ 98.7°C
     vs 18.2 t/s @ 68.8°C).
@@ -86,15 +86,15 @@ only demo beats that are **proven to work reliably on the shipping Q3 model**.
   of seeded bugs, and I report its false-positive rate too, because a security tool
   should. It's a first-pass safety net with no cloud bill and no data leaving the
   machine. Free and open-source, built for the hardware Africa actually has."*
-- **On screen:** `REPORT.md` recall table (82% model / 86% tool), then the GitHub repo page.
-- **⚠️ Do NOT** conflate the 86% (our code-review recall) with the profiler's 0.80
-  (arc_easy). If you show a number, show the 86%/82% and call it *our benchmark*.
+- **On screen:** `REPORT.md` recall table (68% model / 86% tool), then the GitHub repo page.
+- **⚠️ Do NOT** conflate the 86% (our code-review recall) with the profiler's 0.82
+  (arc_easy). If you show a number, show the 86%/68% and call it *our benchmark*.
 
 ---
 
 ## Proof shots to capture (stills, for the Devpost gallery)
 1. **Problems panel** with the three findings (Beat A).
-2. **`submission_q3.json`** — RAM 1.84 GB, throttled=false, accuracy 0.80.
+2. **`submission_q4.json`** — RAM 2.21 GB, throttled=false, accuracy 0.82.
 3. **Airplane-mode toggle** mid-review (offline proof).
 4. **The model's SQLi explanation + fix** (Beat B prose).
 5. Terminal line: `Scanned 1 files … 1 chunk(s) flagged.` after the demo run.

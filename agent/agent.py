@@ -83,12 +83,12 @@ _MODEL_DIR = Path(__file__).resolve().parent.parent / "model"
 # is present so a plain Q4/base download still works.
 DEFAULT_MODEL_PATH = next(
     (p for p in (
-        _MODEL_DIR / "getdebug-edge-3b-q3_k_m.gguf",   # persona-baked Q3 (shipping)
-        _MODEL_DIR / "getdebug-edge-3b-q4_k_m.gguf",   # persona-baked Q4 (fallback)
-        _MODEL_DIR / "qwen2.5-coder-3b-instruct-q3_k_m.gguf",
+        _MODEL_DIR / "getdebug-edge-3b-q4_k_m.gguf",   # persona-baked Q4 (shipping)
+        _MODEL_DIR / "getdebug-edge-3b-q3_k_m.gguf",   # persona-baked Q3 (efficiency alt)
         _MODEL_DIR / "qwen2.5-coder-3b-instruct-q4_k_m.gguf",
+        _MODEL_DIR / "qwen2.5-coder-3b-instruct-q3_k_m.gguf",
     ) if p.exists()),
-    _MODEL_DIR / "getdebug-edge-3b-q3_k_m.gguf",
+    _MODEL_DIR / "getdebug-edge-3b-q4_k_m.gguf",
 )
 
 

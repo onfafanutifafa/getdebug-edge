@@ -17,14 +17,14 @@ library_name: llama.cpp
 pipeline_tag: text-generation
 ---
 
-# getdebug-edge-3B (Q3_K_M GGUF)
+# getdebug-edge-3B (Q4_K_M GGUF)
 
 **Offline, security-first code review that runs entirely on a commodity CPU laptop.**
 
 This is the model artifact for **getdebug-edge**, an entry in the Africa Deep
 Tech Challenge 2026 (Laptop LLM Challenge). It is
 [Qwen2.5-Coder-3B-Instruct](https://huggingface.co/Qwen/Qwen2.5-Coder-3B-Instruct),
-quantized to 3-bit **Q3_K_M GGUF (~1.7 GB)**, with the getdebug-edge code-review
+quantized to 4-bit **Q4_K_M GGUF (~2.1 GB)**, with the getdebug-edge code-review
 methodology **baked into the chat template's default system prompt** — so when
 you run it bare (no external system message), it behaves as a security-focused
 reviewer: it analyzes code, then reports findings in the format
@@ -39,7 +39,7 @@ Full project, agent, evaluation harness, and technical report:
 
 **llama.cpp:**
 ```bash
-llama-server -m getdebug-edge-3b-q3_k_m.gguf \
+llama-server -m getdebug-edge-3b-q4_k_m.gguf \
   --ctx-size 3072 --flash-attn on \
   --cache-type-k q8_0 --cache-type-v q8_0 \
   --n-gpu-layers 0 --threads $(nproc)   # use physical-core count for best speed+thermals
@@ -49,7 +49,7 @@ llama-server -m getdebug-edge-3b-q3_k_m.gguf \
 
 **Ollama:**
 ```bash
-ollama create getdebug-edge -f Modelfile   # FROM ./getdebug-edge-3b-q3_k_m.gguf
+ollama create getdebug-edge -f Modelfile   # FROM ./getdebug-edge-3b-q4_k_m.gguf
 ollama run getdebug-edge "Review this function for bugs: ..."
 ```
 
@@ -57,7 +57,7 @@ ollama run getdebug-edge "Review this function for bugs: ..."
 
 A **first-pass triage** that points a developer at the code worth a closer
 look — not an authoritative gate. On an internal 22-bug benchmark it catches
-~82% of seeded bugs (judged bare-model path); it has a real false-positive rate
+~68% of seeded bugs (judged bare-model path); it has a real false-positive rate
 on clean code and known blind spots in reasoning-heavy classes (access control,
 business-logic validation). Confirm every finding before acting on it. See the
 [technical report](https://github.com/onfafanutifafa/getdebug-edge/blob/main/REPORT.md)
@@ -67,7 +67,7 @@ for the honest accuracy characterization, including false-negative/positive rate
 
 Built for the ADTC Standard Laptop: 8 GB RAM (7 GB budget), integrated
 graphics, CPU-only, Ubuntu 22.04. Measured by the official ADTC profiler:
-**1.84 GB peak RSS** (S_eff = 74), `throttled=false`, no OOM, no crash. (A full
+**2.21 GB peak RSS** (S_eff = 68), `throttled=false`, no OOM, no crash. (A full
 agent review over a real multi-file repo peaks around ~3.5 GB including the
 Python orchestrator and linters — that is the tool's footprint, not the model
 process the profiler scores.)
@@ -75,7 +75,7 @@ process the profiler scores.)
 ## Base model, quantization, and reproducibility
 
 - **Base:** Qwen2.5-Coder-3B-Instruct (Qwen team, Alibaba Cloud)
-- **Quantization:** GGUF Q3_K_M (official Qwen GGUF weights)
+- **Quantization:** GGUF Q4_K_M (official Qwen GGUF weights)
 - **Modification:** only the chat template's default system prompt is changed
   (the getdebug-edge reviewer methodology). Weights are unchanged. Reproduce
   exactly with `tools/bake_persona.py` in the GitHub repo.
@@ -91,7 +91,7 @@ separate license from Alibaba Cloud. As the license requires:
 > Copyright (c) Alibaba Cloud. All Rights Reserved.
 
 **Modifications from the base model** (marked as required by the license): the
-weights are quantized to **GGUF Q3_K_M**, and the reviewer methodology is baked
+weights are quantized to **GGUF Q4_K_M**, and the reviewer methodology is baked
 into the model's **chat-template default system prompt** (`tools/bake_persona.py`).
 No weights were fine-tuned. Inference via
 [llama.cpp](https://github.com/ggml-org/llama.cpp). The getdebug-edge agent,
