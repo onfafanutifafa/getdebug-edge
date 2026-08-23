@@ -41,8 +41,8 @@ submitted commit hash.
       already field-identical to the template schema.
 - [ ] Weights delivery: check whether the template expects Git LFS in-repo or
       a `download_model.sh` pattern — set up LFS if required
-- [ ] `metadata.json`: fill `team_id` (register on the portal) and
-      `github_handle`; test prompts are DONE (both verified to produce strong
+- [x] `metadata.json`: `team_id` (`getdebug-edge`, registered on the portal) and
+      `github_handle` set; test prompts are DONE (both verified to produce strong
       model answers — tp_001 rewritten 2026-07-11 after the original made the
       model produce a wrong fix)
 - [ ] Add `LICENSE` (Apache-2.0 for our code) + attribution section (llama.cpp,

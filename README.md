@@ -50,8 +50,9 @@ Key components:
   model (see [`finetune/RESULTS.md`](./finetune/RESULTS.md))
 - `bench.sh` / `REFERENCE_BENCHMARK.md` — throughput + constraint benchmarks
 
-Remaining before final submission: `team_id` + `github_handle` in
-`metadata.json`, and a true reference-hardware (Intel i5) throughput run.
+`team_id` (`getdebug-edge`, registered) and `github_handle` are set in
+`metadata.json`. Remaining before final submission: a true reference-hardware
+(Intel i5) throughput run.
 
 ## Install llama.cpp
 

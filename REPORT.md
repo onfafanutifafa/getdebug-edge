@@ -1,6 +1,6 @@
 # Technical Report — getdebug-edge: Offline AI Code Review for Africa's Laptops
 
-**Team ID:** TODO-register-on-adtf-portal
+**Team ID:** getdebug-edge (registered on the ADTF portal)
 **Domain:** coding_assistants
 **Model:** Qwen2.5-Coder-3B-Instruct-Q3_K_M
 
