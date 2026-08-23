@@ -82,8 +82,18 @@ process the profiler scores.)
 
 ## License & attribution
 
-This is a derivative of Qwen2.5-Coder-3B-Instruct and inherits the **Qwen
-Research License** (see `license_link` above) — please review its terms before
-use. Base model © the Qwen team. Inference via
+**Built with Qwen.** This is a derivative of Qwen2.5-Coder-3B-Instruct and is
+distributed under the **Qwen RESEARCH License — non-commercial (research or
+evaluation) use only** (see `license_link` above); commercial use requires a
+separate license from Alibaba Cloud. As the license requires:
+
+> Qwen is licensed under the Qwen RESEARCH LICENSE AGREEMENT,
+> Copyright (c) Alibaba Cloud. All Rights Reserved.
+
+**Modifications from the base model** (marked as required by the license): the
+weights are quantized to **GGUF Q3_K_M**, and the reviewer methodology is baked
+into the model's **chat-template default system prompt** (`tools/bake_persona.py`).
+No weights were fine-tuned. Inference via
 [llama.cpp](https://github.com/ggml-org/llama.cpp). The getdebug-edge agent,
-detectors, and harness are original work, GPL-3.0 (in the GitHub repo).
+detectors, and harness are original work, GPL-3.0 (in the GitHub repo) — a
+separate license on a separate artifact from these weights.

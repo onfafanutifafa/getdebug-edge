@@ -142,14 +142,15 @@ specific contest scores and disqualifies submissions.
 Concretely, `agent/agent.py` now runs:
 
 ```
-llama-server -m model/qwen2.5-coder-3b-instruct-q4_k_m.gguf \
-  --ctx-size 3072 --threads <cores-1> --threads-batch <cores-1> \
+llama-server -m model/getdebug-edge-3b-q3_k_m.gguf \
+  --ctx-size 3072 --threads <physical-cores> --threads-batch <physical-cores> \
   --batch-size 512 --cache-type-k q8_0 --cache-type-v q8_0 \
-  --n-gpu-layers 0 --host 127.0.0.1 --port 8080
+  --n-gpu-layers 0 --host 127.0.0.1 --port 0
 ```
 
-and every chunk becomes a `POST /completion` against that already-loaded
-server. Flag names above may shift slightly across llama.cpp versions —
+and every chunk becomes a `POST /v1/chat/completions` against that already-loaded
+server (an ephemeral free port is chosen automatically; the agent never assumes a
+fixed port). Flag names above may shift slightly across llama.cpp versions —
 verify against whatever build ends up installed before benchmarking.
 
 ## 7b. African language strategy (offline vs Khaya AI)
@@ -220,9 +221,11 @@ offline-first, online-enhanced.
 - Confirm the entry's venture identity/team_id registration is clean against the
   eligibility rules (<12 months old, pre-commercial, <$25K raised) — separate from
   getdebug/everweep's own age and stage.
-- Decide whether to actually claim the African Use Case bonus (`african_alpha_claim`)
-  — currently set `true` in the scaffolded `metadata.json`; needs a concrete,
-  defensible use-case writeup to back it up.
+- `african_alpha_claim` is the **African-Language** (+15%) claim, and is set
+  `false` in `metadata.json` — the shipping 3B cannot produce usable indigenous
+  African-language output (see BAKEOFF.md). The separate **African Use-Case**
+  bonus (no metadata flag; judged from the writeup) is still pursued via
+  `AFRICAN_USE_CASE.md`.
 - **African Language Support multiplier (+15%)** — currently NOT claimed
   (`language_scope: ["en"]`). Bake-off data (see `BAKEOFF.md`) says the honest
   route exists but requires a model swap: Qwen2.5-Coder-3B's Swahili collapses

@@ -39,6 +39,9 @@ def main() -> None:
                         default=ROOT / "model" / "qwen2.5-coder-3b-instruct-q4_k_m.gguf")
     parser.add_argument("--out", type=Path, default=ROOT / "eval" / "results.json")
     parser.add_argument("--ctx-size", type=int, default=3072)
+    parser.add_argument("--no-detectors", action="store_true",
+                        help="Measure the model-only path (skip the deterministic "
+                             "hybrid detector pass), to isolate model vs full-tool recall.")
     args = parser.parse_args()
 
     skill = (ROOT / "skills" / "SKILL.md").read_text()
@@ -46,7 +49,9 @@ def main() -> None:
     server = LlamaServer(args.model, args.ctx_size, physical_core_count())
     server.start(120)
 
-    results = {"model": args.model.name, "files": {}}
+    results = {"model": args.model.name,
+               "config": "model-only" if args.no_detectors else "hybrid (model+detectors)",
+               "files": {}}
     caught = missed = fps = 0
     t0 = time.monotonic()
     try:
@@ -60,9 +65,10 @@ def main() -> None:
             )
             # Hybrid: append deterministic-detector findings, exactly as the
             # agent does, so the eval measures the shipping configuration.
-            det = scan_text(path.read_text(errors="ignore"))
-            if det:
-                response += "\n" + "\n".join(det)
+            if not args.no_detectors:
+                det = scan_text(path.read_text(errors="ignore"))
+                if det:
+                    response += "\n" + "\n".join(det)
             findings = extract_findings(response)
             entry = {"findings": len(findings), "caught": {}, "false_positives": 0}
             if spec["clean"]:

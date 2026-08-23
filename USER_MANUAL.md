@@ -98,9 +98,11 @@ python3 agent/agent.py --target ~/my-project --lang French --out findings.json
 ```
 
 The explanations switch language; the code itself and the severity tags stay in
-English. Quality varies by language — French and Swahili work reasonably;
-smaller African languages are limited by the model (see the roadmap in
-`SCOPE.md` for the Khaya AI plan).
+English. **This is experimental and best-effort on a 3B model:** output quality
+varies, and on the shipping model it frequently falls back to English —
+African-language output in particular is unreliable (measured word-salad on
+Swahili; see `BAKEOFF.md`). Don't depend on it; proper local-language support is
+a roadmap item (see `SCOPE.md` §7b).
 
 ### Catch business-logic bugs by describing how the app should work
 

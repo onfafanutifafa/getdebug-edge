@@ -13,7 +13,7 @@ A three-person fintech team in Accra moving school fees over mobile money often 
 getdebug-edge is an **offline, security-first code reviewer** — and, because its base is a code model, a fix-suggester and coding assistant too. You point it at a project folder and a 3-billion-parameter model running entirely on your CPU — **no internet, no account, no data ever leaving the machine** — reviews your code and flags bugs, vulnerabilities, and correctness issues with fixes.
 
 - **A three-layer hybrid.** The LLM reasons about the code; fast deterministic detectors catch pattern-matchable classes it misses (hardcoded secrets, weak crypto, secrets-in-logs, JWTs with no expiry); and **spec-aware review** — you describe how the app *should* behave in a `SPEC.md` — surfaces business-logic bugs that neither a model nor a regex can find without knowing intent.
-- **Multi-language.** The LLM reviews 15+ languages (Python, JS/TS, Java, Go, Rust, C/C++, C#, Ruby, PHP, SQL); the deterministic detectors cover **Python, JavaScript, Java, and Go**, so those developers get the extra safety net, not just LLM review.
+- **Multi-language.** The LLM reviews 12 languages across 16 file types (Python, JS/TS/JSX/TSX, Java, Go, Rust, C/C++, C#, Ruby, PHP, SQL); the deterministic detectors cover **Python, JavaScript, Java, and Go**, so those developers get the extra safety net, not just LLM review.
 - **It suggests code, not just prose.** `--fix` emits corrected code for each finding; `--prompt` writes new code on request.
 - **It meets you where you work.** Findings drop into VS Code's Problems panel; explanations can come in other languages.
 - **It's tiny on purpose.** A 3-bit quantized model (~1.7 GB on disk, **1.84 GB peak RAM** measured by the official profiler) — small enough to run on a 4 GB machine, or on a modern phone.
@@ -36,7 +36,7 @@ Every decision was measured, not assumed:
 
 - **8 GB RAM, and out-of-memory means instant disqualification** — not lost points, a zero. Every choice (model size, context window, KV-cache quantization) was made against that ceiling.
 - **CPU only, no GPU** — so throughput is bound by memory bandwidth, and every millisecond had to be earned in software.
-- **100% offline during evaluation** — no cloud fallback, no API, nothing. The whole review loop had to run on localhost.
+- **Fully offline during evaluation** — no cloud fallback, no API, nothing. The whole review loop had to run on localhost.
 - **A thermal penalty** — exceed 85 °C or throttle, and you lose 10 points. On the low-cost, poorly-cooled hardware this targets, that is a real risk.
 - **Speed is scored *relative to the fastest submission*** — meaning a 3B model, chosen for accuracy, can never win the speed axis outright. I had to accept a structural ceiling on 30% of the score to protect the 50% that is accuracy.
 

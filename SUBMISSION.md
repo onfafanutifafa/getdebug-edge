@@ -187,7 +187,7 @@ template, seeded-bug eval corpus for measurable prompt tuning.
 - [x] **Seeded-bug eval harness** — `eval/` (2026-07-12): 10 seeded bugs
       across 5 files + 2 clean controls; baseline recall 8/10 with 3 FPs;
       regression gate for all prompt/skill/model changes
-- [x] Unit tests (14, stdlib unittest) + GitHub Actions CI on ubuntu-22.04
+- [x] Unit tests (44, stdlib unittest) + GitHub Actions CI on ubuntu-22.04
 - [ ] **Demo GIF at the top of the README** — first thing judges see
 - [ ] Architecture diagram (observe→think→act, one persistent server) in README
 - [ ] `BAKEOFF.md` is already a differentiator — reference it prominently in

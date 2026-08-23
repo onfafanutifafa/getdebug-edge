@@ -2,7 +2,7 @@
 
 **Team ID:** TODO-register-on-adtf-portal
 **Domain:** coding_assistants
-**Model:** Qwen2.5-Coder-3B-Instruct-Q4_K_M
+**Model:** Qwen2.5-Coder-3B-Instruct-Q3_K_M
 
 ---
 
@@ -35,9 +35,10 @@ tool existing for this user and not existing.
 
 - **Base model:** Qwen2.5-Coder-3B-Instruct — the strongest open code-review
   model in its size class in our head-to-head testing (see below).
-- **Quantization:** GGUF Q4_K_M (~2.1 GB) — the standard quality/memory
-  balance point; leaves >3 GB of headroom under the 7 GB budget with the
-  whole agent running.
+- **Quantization:** GGUF Q3_K_M (~1.7 GB) — chosen over Q4_K_M after a measured
+  quant sweep (smaller, lighter on RAM, equal-or-better on our checks); the
+  profiler measures 1.84 GB peak RSS, leaving >5 GB of headroom under the 7 GB
+  budget. (Earlier development benchmarks were on Q4_K_M.)
 - **Alternatives considered and rejected** (all measured, not guessed — full
   data in [`BAKEOFF.md`](./BAKEOFF.md) and [`bakeoff_results.json`](./bakeoff_results.json)):
   - *Qwen2.5-Coder-1.5B*: doubles speed (18.2 vs 9.6 t/s), halves RAM — but

@@ -81,8 +81,9 @@ python3 agent/agent.py --target /path/to/some/repo --out findings.json
 # 2b. One-shot question (demo mode — also how the contest test_prompts run)
 python3 agent/agent.py --prompt "Review this function for bugs: ..."
 
-# 2c. Finding explanations in another language (code terms stay in English)
-python3 agent/agent.py --target /path/to/repo --lang Swahili --out findings.json
+# 2c. (experimental) non-English explanations — best-effort on a 3B; output
+#     quality varies and often falls back to English (code terms stay English)
+python3 agent/agent.py --target /path/to/repo --lang French --out findings.json
 ```
 
 New to all of this? **[USER_MANUAL.md](./USER_MANUAL.md)** walks through setup
@@ -154,7 +155,7 @@ The gap is by design — it reflects what can and can't live *inside the model*
 | Lives in the model ✅ | Lives in the tool (harness) |
 |---|---|
 | Review methodology & instructions | Deterministic regex detectors (run at review time) |
-| The behavior to *look for* secrets, MD5, injection | The regex's 100%-reliable *guarantee* |
+| The behavior to *look for* secrets, MD5, injection | The regex's deterministic *guarantee* (fires every time, no hallucination) |
 | The capability to check code against a spec | Your project's specific `SPEC.md` (per-project data) |
 | **→ this is the 82% a judge scores** | **→ this is what lifts it to 86% + logic bugs** |
 
@@ -214,8 +215,26 @@ Khaya AI roadmap).
 
 ## License
 
-getdebug-edge is licensed under the **GNU General Public License v3.0** (see
-[`LICENSE`](./LICENSE)). GPL-3.0 is a copyleft license: you are free to use,
-study, run, and modify this code — but any distributed derivative work must
-also be released under GPL-3.0 with source. In short, it stays free and open
-for everyone; it cannot be taken closed-source.
+**The code** (`agent/`, `eval/`, `tools/`, everything in this repo) is licensed
+under the **GNU General Public License v3.0** (see [`LICENSE`](./LICENSE)):
+free to use, study, run, and modify for any purpose, including commercially;
+distributed derivatives must stay GPL-3.0 with source. The code cannot be taken
+closed-source.
+
+**The model is licensed separately — read this before commercial use.** The
+shipped weights are a quantized build of **Qwen2.5-Coder-3B-Instruct**, which
+Alibaba releases under the **Qwen RESEARCH License — non-commercial (research
+or evaluation) use only**, *not* Apache-2.0 (unlike the 1.5B/7B in that family).
+So:
+
+- Using getdebug-edge for **research, evaluation, learning, or personal
+  projects** is fine.
+- Using it on **commercial code** (or shipping the model inside a commercial
+  product) requires a commercial license from Alibaba, **or** swapping in an
+  Apache-2.0 model — e.g. Qwen2.5-Coder-1.5B/7B-Instruct — via `--model`.
+- Redistributions of the model must carry the Qwen license and the notice
+  *"Qwen is licensed under the Qwen RESEARCH LICENSE AGREEMENT, Copyright (c)
+  Alibaba Cloud. All Rights Reserved."* and state **"Built with Qwen."**
+
+Built with Qwen. The GPL-3.0 code is free for everyone; the *default model* is
+non-commercial — those are two different licenses on two different artifacts.
