@@ -70,15 +70,17 @@ Paste `bench_i5_results/results.txt` (or `results.json`) back here. Then we:
    (they currently carry the i9 dev-machine TPS as an explicit *upper bound*).
 2. Recompute **S_perf** once we know the fastest-submission TPS (S_perf is
    normalized to that, not a fixed bar) — until then TPS is the input, not the score.
-3. Confirm **P_thermal = 0** (the design target: physical-core threading was
-   ~27 °C cooler than all-threads precisely to avoid the penalty).
+3. Confirm **P_thermal = 0** (the design target: physical-core threading runs
+   cooler than all-threads — fewer active execution units — precisely to avoid
+   the penalty; capture the real i5 peak temp here since the container can't).
 4. Swap `submission_i5.json` in as the final submission artifact (it carries the
    real TPS/thermal that the Docker run on the Mac could not).
 
 ## Notes
 
 - `bench_i5.sh` uses **physical cores** (not hyperthreads) — the measured sweet
-  spot (~25% faster *and* ~27 °C cooler than all logical threads on the i9).
+  spot (~22% faster at generation than all logical threads on the i9: 9.6 vs
+  7.9 t/s; and cooler, since the extra hyperthreads add heat, not speed).
 - If `sensors` shows nothing after `sensors-detect`, the script falls back to
   `/sys/class/thermal/thermal_zone*` and still reports a peak; if even that is
   empty it says "unavailable" and still gives you TPS.

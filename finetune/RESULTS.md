@@ -36,7 +36,7 @@ not retraining it:
 - **Accuracy**: analyze-first prompting, the SKILL.md review methodology,
   local-linter context injection, deterministic decoding (temp 0 + repeat
   penalty), and the persona baked into the chat template.
-- **Speed/energy**: physical-core threading (~25% faster AND ~27°C cooler),
+- **Speed/energy**: physical-core threading (~22% faster at generation AND cooler),
   KV-prefix reuse, and a persistent result cache (unchanged files skip
   inference entirely).
 

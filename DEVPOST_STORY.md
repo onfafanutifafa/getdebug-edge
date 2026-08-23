@@ -43,7 +43,7 @@ Every decision was measured, not assumed:
 **Then, the obstacles that fought back:**
 
 - **Fine-tuning made the model *worse* — twice.** Two LoRA runs on a free Colab T4 both regressed accuracy: the first taught it to stop after one finding, the second overfit to my templated data and started answering "no issues" on obviously buggy code. My own eval harness caught it, and I made the hard call to ship the base model, not the fine-tune.
-- **The obvious performance setting was a trap.** Using all CPU threads was *slower* than using fewer, and hot enough to trip the thermal penalty — the exact opposite of intuition. Physical-core threading turned out to be ~25% faster *and* ~27 °C cooler.
+- **The obvious performance setting was a trap.** Using all 16 logical threads was *slower* at generation than using the 8 physical cores — the exact opposite of intuition. Physical-core threading measured **~22% faster** for generation (9.6 vs 7.9 t/s), and it runs cooler: the extra hyperthreads add heat without adding generation speed. The profiler confirmed no thermal throttling.
 - **My own accuracy number flattered me.** A 10-sample test showed 80%; expanding it to a size that actually means something dropped it to a truthful 68%. I published the lower number.
 - **The 3B has a hard reasoning ceiling.** When I tried to prompt it into catching business-logic bugs by adding reasoning cues, accuracy went *down*, not up — proof you can't prompt a small model into reasoning it can't do. (The fix came later, from a different angle: letting the developer supply the intent via a spec.)
 - **The model over-flags clean code** — it called a correctly-parameterized query "SQL injection." False positives are real at this size, and I report the rate openly.

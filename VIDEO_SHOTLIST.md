@@ -71,15 +71,15 @@ only demo beats that are **proven to work reliably on the shipping Q4 model**.
 ### 1:05–1:40 · Engineering  (cutaways to charts / terminal)
 - **Narrate:** *"Everything is tuned to an 8-gigabyte, CPU-only budget. I benchmarked
   six open models, ship a 4-bit quantization, and found that using physical cores
-  instead of hyperthreads made it 25% faster AND 27 degrees cooler — an energy win
+  instead of hyperthreads made generation ~22% faster and run cooler — an energy win
   where the grid is the constraint. The contest's own profiler confirms it: just 2.2
   gigabytes of RAM, no crash, no throttling."*
 - **On screen (pick 2–3):**
   - `submission_q4.json` — highlight `memory.peak_rss_mb: 2209`, `cpu_thermal.throttled: false`,
     `accuracy … 0.82`.
   - `BAKEOFF.md` table (six models) or `REPORT.md` quant-sweep table.
-  - Optional: the physical-core vs all-threads numbers from `SCOPE.md` (14.7 t/s @ 98.7°C
-    vs 18.2 t/s @ 68.8°C).
+  - Optional: the physical-core vs all-threads generation numbers from `SCOPE.md`
+    (9.6 t/s at 8 physical cores vs 7.9 t/s at 16 logical threads).
 
 ### 1:40–2:00 · Honesty + impact
 - **Narrate:** *"I measured the tool honestly — on my own benchmark it catches around 86%

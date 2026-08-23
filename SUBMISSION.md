@@ -99,7 +99,7 @@ the line."
 **[1:05–1:40 — engineering, cutaways to charts]**
 "Everything is tuned to an 8-gigabyte, CPU-only budget. I benchmarked six open
 models, ship a 4-bit quantization, and found that using physical cores instead
-of hyperthreads made it 25% faster AND 27 degrees cooler — an energy win where
+of hyperthreads made it ~22% faster at generation and run cooler — an energy win where
 the grid is the constraint. The contest's own profiler confirms the margin: just
 2.2 gigabytes of RAM — leaving most of the budget free — no crash, no
 throttling."
@@ -137,7 +137,7 @@ Standard Laptop — the **official rule, verified 2026-08-09** on
 profiler README's `TPS_REFERENCE=15.0` is a local self-check simplification and
 does not govern). So S_perf **cannot be computed until all submissions are in**;
 the projections below assume a placeholder `TPSmax ≈ 15` purely for illustration.
-For context, the Q3 alternative's generation is ~35% faster than shipping Q4 (14.6 vs 10.8 t/s dev machine).
+For context, the Q3 alternative's generation is ~15% faster than shipping Q4 (11.1 vs 9.6 t/s, dev-machine llama-bench, 8 physical cores).
 
 <!-- S_acc here = the AUTOMATED lm-eval benchmark score on the raw model (the
 profiler's accuracy stage, no chat template, no agent). It is NOT our
@@ -147,11 +147,10 @@ Q3 = 0.80 (40/50) — a 1-question gap, within noise; Q4 ships (it leads the bar
 model the judged path scores). A qualitative judge read may adjust the final
 S_acc; the automated stage is 82. -->
 
-| Scenario | S_acc | TPS → S_perf *(illustrative, TPSmax≈15 placeholder)* | S_eff | S_total |
+| Scenario (Q4 shipping) | S_acc | TPS → S_perf *(illustrative, TPSmax≈15 placeholder)* | S_eff | S_total |
 |---|---|---|---|---|
-| Dev-machine optimistic | 82 (measured) | 14.6 → 97 | 68 | **~84** |
-| Central | 82 (measured) | 11 → 73 | 68 | **~77** |
-| Reference-hw conservative | 82 (measured) | ~9 → 60 | 68 | **~73** |
+| Dev-machine native (9.6 t/s, i9) | 82 (measured) | 9.6 → 64 | 68 | **~74** |
+| Profiler / audit-like container (3.9 t/s, no-AVX) | 82 (measured) | 3.9 → 26 | 68 | **~62** |
 
 *S_perf column is illustrative only:* the real `TPSmax` is the fastest submission's
 speed and is unknown until judging. If a tiny-model entry sets a very high `TPSmax`,

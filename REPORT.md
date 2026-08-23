@@ -134,10 +134,13 @@ tool existing for this user and not existing.
   quantized to q8_0 (with flash attention, required for quantized V-cache) to
   bound memory.
 - **Compute/thermal:** threads default to **physical cores, not logical
-  CPUs** — measured on an 8c/16t machine: 15 threads gave 14.7 t/s at 98.7°C
-  with throttling to 56% CPU speed; 8 threads gave 18.2 t/s at 68.8°C with no
-  throttling. Memory-bandwidth-bound generation means SMT threads add heat,
-  not speed. An optional inter-chunk pause guards long runs.
+  CPUs** — measured on an 8c/16t i9 (llama-bench, shipping Q4): 8 physical
+  threads gave **9.6 t/s** generation; 16 logical threads gave **7.9 t/s** —
+  physical cores are **~22% faster**. Memory-bandwidth-bound generation means
+  SMT siblings add heat, not speed (compute-bound prompt processing is
+  marginally faster at 16 threads, but generation is the scored metric). Fewer
+  active execution units also run cooler; the profiler measured **no throttling**
+  (`throttled=false`, CPU p99 51.6%). An optional inter-chunk pause guards long runs.
 - **Connectivity:** assumed absent. One-time model download
   (`download_model.sh`); after that, zero network calls — the review loop is
   entirely localhost. This also serves users whose constraint is policy
@@ -160,7 +163,7 @@ Shipping quant: **Q4_K_M** (see the quant sweep below).
 | Machine | Intel i9-9980HK (8c/16t), 64 GB RAM, macOS (development machine — faster than the ADTC reference; treat as upper bound) |
 | **RAM at peak (ADTC profiler)** | **2.21 GB** (model process, profiler's standardized load) → **S_eff = 100×(7−2.21)/7 = 68** — this is the figure the judges' profiler scores |
 | RAM at peak (full agent review) | ~3.5 GB reviewing a real multi-file repo (Python orchestrator + persistent llama-server + linters) — the tool's end-to-end footprint, not the profiler figure |
-| Generation speed | 14.6 t/s (llama-bench, 8 threads) |
+| Generation speed | 9.6 t/s (llama-bench, 8 physical threads, dev i9) |
 | Thermal throttling | None (ADTC profiler: `throttled=false`, CPU p99 51.6%) — and physical-core threading keeps all-logical-thread throttling away (see Constraints) |
 
 ### Quantization sweep — why Q4_K_M, not Q3_K_M
@@ -174,8 +177,8 @@ figures come from the ADTC profiler and are given just below.
 
 | Quant | Size | Recall (full tool) | Gen TPS | Peak RAM (dev) | S_eff (dev) |
 |---|---|---|---|---|---|
-| **Q4_K_M (shipping)** | **2.10 GB** | **19/22 = 86%** | **10.8** | **3.83 GB** | **47** |
-| Q3_K_M (alternative) | 1.72 GB | 18/22 = 82% | 14.6 | 2.65 GB | 62 |
+| **Q4_K_M (shipping)** | **2.10 GB** | **19/22 = 86%** | **9.6** | **3.83 GB** | **47** |
+| Q3_K_M (alternative) | 1.72 GB | 18/22 = 82% | 11.1 | 2.65 GB | 62 |
 
 **Q4_K_M ships because the contest scores the bare model, and Q4 leads it.** The
 judged path (§below) runs the raw GGUF — no agent, no detectors — so what wins is
