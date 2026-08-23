@@ -1,0 +1,39 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "getdebug-edge: review demo",
+      "type": "shell",
+      "command": "python3 ${workspaceFolder}/agent/agent.py --target ${workspaceFolder}/demo --out ${workspaceFolder}/demo/findings.json --diagnostics --no-lint",
+      "presentation": { "reveal": "always", "panel": "dedicated", "clear": true },
+      "problemMatcher": {
+        "owner": "getdebug-edge",
+        "fileLocation": "absolute",
+        "pattern": {
+          "regexp": "^(.+):(\\d+): (error|warning|info): (.*)$",
+          "file": 1,
+          "line": 2,
+          "severity": 3,
+          "message": 4
+        }
+      }
+    },
+    {
+      "label": "getdebug-edge: review this project",
+      "type": "shell",
+      "command": "python3 ${workspaceFolder}/agent/agent.py --target ${workspaceFolder} --out ${workspaceFolder}/findings.json --diagnostics",
+      "presentation": { "reveal": "always", "panel": "dedicated", "clear": true },
+      "problemMatcher": {
+        "owner": "getdebug-edge",
+        "fileLocation": "absolute",
+        "pattern": {
+          "regexp": "^(.+):(\\d+): (error|warning|info): (.*)$",
+          "file": 1,
+          "line": 2,
+          "severity": 3,
+          "message": 4
+        }
+      }
+    }
+  ]
+}

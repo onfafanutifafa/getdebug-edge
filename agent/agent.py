@@ -617,7 +617,11 @@ def main() -> None:
                 line_m = _re.search(r"line\s*~?\s*(\d+)", line, _re.IGNORECASE)
                 sev = severity_map[sev_m.group(1).lower()] if sev_m else "warning"
                 lineno = line_m.group(1) if line_m else "1"
-                msg = _re.sub(r"^\s*[-*]\s*[*\[(]*\s*(?:high|medium|low)[])*]*\s*", "", line, flags=_re.IGNORECASE)
+                # Strip the leading severity marker in any form the model
+                # emits: "- [high] ", "- **High Severity**: ", "* (medium) ", etc.
+                msg = _re.sub(
+                    r"^[\s\-*]*[\[(*]*\s*(?:high|medium|low)\s*(?:severity)?\s*[*\]):]*\s*",
+                    "", line, flags=_re.IGNORECASE)
                 print(f"{Path(report.target) / f.file}:{lineno}: {sev}: {msg.strip()}")
 
     cache_note = f" ({cache.hits} chunk(s) from cache)" if cache.hits else ""
