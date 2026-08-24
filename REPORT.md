@@ -357,9 +357,9 @@ triage that directs a human's attention — not an authoritative gate.**
 
 ## Screenshots
 
-<!-- TODO before submission (shot list in SUBMISSION.md): terminal run,
-findings.json with a real SQL-injection finding, VS Code Problems-panel
-integration, adtc-profiler output, bench.sh comparison table. -->
+<!-- Screenshots to capture: terminal run, findings.json with a real
+SQL-injection finding, VS Code Problems-panel integration, adtc-profiler
+output, bench.sh comparison table. -->
 
 ---
 
