@@ -1,7 +1,7 @@
 # getdebug-edge — Project Scope
 
 **Contest:** Africa Deep Tech Challenge 2026 — Laptop LLM Challenge
-**Gate 1 deadline:** Aug 25, 2026 @ 11:45pm PDT
+**Deadline:** Aug 24, 2026 @ 11:45pm PDT (verified on Devpost 2026-08-24; = Aug 25 06:45 UTC)
 **Status:** registered — team_id `getdebug-edge` on the ADTF portal; repo public.
 
 ## 1. Problem
@@ -203,7 +203,7 @@ post-processes the findings report through the Khaya translation API for
 languages the local model can't handle. This also matches the product thesis:
 offline-first, online-enhanced.
 
-## 8. Timeline against Gate 1 (Aug 25, 2026)
+## 8. Timeline against the deadline (Aug 24, 2026 @ 11:45pm PDT)
 
 | Window | Work |
 |---|---|
@@ -240,6 +240,6 @@ offline-first, online-enhanced.
   Confirm whether the template expects Git LFS weights in-repo or the
   `download_model.sh` pattern (check `adtc-2026-submission-template`); if LFS is
   required, set it up before Gate 1.
-- Deadline discrepancy: Devpost renders the deadline as **Aug 24, 2026 11:45 PM
-  PDT** while other sources (and this doc's header) say Aug 25 — confirm on the
-  portal and treat the earlier date as real until proven otherwise.
+- Deadline: **Aug 24, 2026 11:45 PM PDT** — CONFIRMED on Devpost 2026-08-24
+  (countdown reads "Aug 25 2:45am EDT" = same instant; = Aug 25 06:45 UTC).
+  The earlier "Aug 25" references were timezone conversions, not a later date.

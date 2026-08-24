@@ -1,4 +1,4 @@
-# Submission plan — ADTC 2026 (deadline: verify Aug 24 vs 25, 2026, 11:45 PM PDT)
+# Submission plan — ADTC 2026 (deadline: Aug 24, 2026, 11:45 PM PDT — verified on Devpost)
 
 Working checklist for Gate 1. The contest requires: an open-source GitHub repo
 conforming to the official `adtc-2026-submission-template`, a project report
