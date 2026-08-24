@@ -1,6 +1,6 @@
 {
   "target": "demo",
-  "model": "/Users/nutifafa/Node/getdebug-edge/model/getdebug-edge-3b-q3_k_m.gguf",
+  "model": "/Users/nutifafa/Node/getdebug-edge/model/getdebug-edge-3b-q4_k_m.gguf",
   "files_scanned": 1,
   "chunks_reviewed": 1,
   "findings": [
@@ -13,6 +13,18 @@
         "- [medium] Sensitive data (password/secret/token) written to logs (line ~22) \u2014 fix: never log secrets; redact or omit the sensitive field"
       ],
       "raw_response": "[deterministic detectors]",
+      "fix_code": ""
+    },
+    {
+      "file": "momo_payment.py",
+      "chunk_index": 0,
+      "findings": [
+        "- [high] SQL Injection (line ~10) \u2014 fix: Use parameterized queries or safe APIs for database operations.",
+        "- [medium] Weak Pin Hashing (line ~5) \u2014 fix: Replace MD5 with bcrypt/argon2 for password/PINs/signatures.",
+        "- [low] Error Handling in `login` function (line ~13) \u2014 fix: Add a check to handle the case where no user is found.",
+        "- [medium] Average Fee Calculation (line ~17) \u2014 fix: Handle the case of an empty list of transfers by returning 0 or raising an exception."
+      ],
+      "raw_response": "### File Overview and Potential Issues\n\nThe `momo_payment.py` file contains functions for processing payments in a Ghanaian mobile-money school-fees app. The code uses SQLite for database operations and MD5 hashing for pin security. However, there are several issues that could lead to vulnerabilities or bugs:\n\n1. **SQL Injection**: The SQL query is built by concatenating strings from external input (`student_id`), which can be exploited if `student_id` contains malicious data.\n2. **Weak Pin Hashing**: MD5 is used for hashing PINs, which is insecure and trivially reversible for 4-digit PINs.\n3. **Error Handling**: The `login` function does not handle the case where no user is found with the given phone number, leading to a potential security issue if an attacker can guess a valid phone number.\n4. **Average Fee Calculation**: The `average_fee` function crashes on an empty list of transfers, which could lead to a runtime error.\n\n### Findings\n\n- [high] SQL Injection (line ~10) \u2014 fix: Use parameterized queries or safe APIs for database operations.\n- [medium] Weak Pin Hashing (line ~5) \u2014 fix: Replace MD5 with bcrypt/argon2 for password/PINs/signatures.\n- [low] Error Handling in `login` function (line ~13) \u2014 fix: Add a check to handle the case where no user is found.\n- [medium] Average Fee Calculation (line ~17) \u2014 fix: Handle the case of an empty list of transfers by returning 0 or raising an exception.\n\n### Suggested Fixes\n\n- Replace MD5 with bcrypt/argon2 for pin hashing:\n  ```python\n  import bcrypt\n\n  def hash_pin(pin: str) -> str:\n      return bcrypt.hashpw(pin.encode(), bcrypt.gensalt()).decode()\n  ```\n\n- Use parameterized queries in the `record_payment` function:\n  ```python\n  query = \"UPDATE fees SET paid = paid + ? WHERE student_id = ?\"\n  db.execute(query, (amount, student_id))\n  ```\n\n- Handle the case of no user found in the `login` function:\n  ```python\n  row = db.execute(\"SELECT pin_hash FROM users WHERE phone = ?\", (phone,)).fetchone()\n  return row is not None and row[0] == hash_pin(pin)\n  ```\n\n- Handle the case of an empty list of transfers in the `average_fee` function:\n  ```",
       "fix_code": ""
     }
   ]

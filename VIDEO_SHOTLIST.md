@@ -48,25 +48,29 @@ only demo beats that are **proven to work reliably on the shipping Q4 model**.
 **Beat A — the deterministic hybrid (Problems panel):**
 - **Action:** In VS Code, `Cmd+Shift+P` → **Run Task** → **"getdebug-edge: review demo"**
   (this task is pre-wired in `.vscode/tasks.json`).
-- **On screen:** the **Problems panel fills with three real issues**, each clickable to the line:
+- **On screen:** the **Problems panel fills with the findings**, each clickable to the line.
+  Three are **deterministic detectors** (identical every take, correct labels):
   - `error` · **Hardcoded secret in source (Stripe live secret key)** · line 6
   - `error` · **Weak hash (MD5) used** · line 11
   - `warning` · **Sensitive data written to logs** · line 22
+  …and the **model** adds the reasoning-based ones — on the shipping Q4 it also catches:
+  - `error` · **SQL Injection** · line 10
+  - `warning` · **Average-fee division-by-zero on empty input** · line 17
 - **Narrate:** *"This is a budget laptop with no internet. I point it at a fintech
-  project and a 3-billion-parameter model running locally reviews it — while
-  deterministic detectors instantly catch a hardcoded live payment key, MD5 password
-  hashing, and a PIN written to logs. They land in VS Code's Problems panel, clickable
-  straight to the line."*
-- **Why this beat:** these three are **deterministic** — identical every take, correct labels.
+  project and a 3-billion-parameter model running locally reviews it — deterministic
+  detectors instantly catch a hardcoded live payment key, MD5 hashing, and a PIN
+  written to logs, and the model itself catches the SQL injection in the payment
+  query. They all land in VS Code's Problems panel, clickable straight to the line."*
+- **Why this beat:** the 3 detector findings are deterministic (guaranteed every take);
+  the SQLi + div-by-zero are the Q4 model reasoning (verified in `demo/findings.json`).
 
-**Beat B — the model reasoning (SQL injection):**
-- **Action:** in the terminal, run the `--prompt` webhook command (the warm-up one above,
-  or point at `demo/momo_payment.py`).
-- **On screen:** the model **explains the SQL injection in plain English and shows the
-  parameterized-query fix.**
-- **Narrate:** *"And the model itself reasons about the code — here it catches the SQL
-  injection in the payment handler and writes the corrected, parameterized query."*
-- **Tip:** let ~5–8 seconds of output stream, then cut. Don't wait for the full response.
+**Beat B (optional) — the model writing the fix:**
+- **Action:** in the terminal, run the `--prompt` webhook command (the warm-up one above).
+- **On screen:** the model explains the SQL injection in plain English and prints the
+  corrected parameterized query.
+- **Narrate:** *"…and it doesn't just flag — it writes the corrected, parameterized query."*
+- **Tip:** let ~5–8 seconds stream, then cut. Skip this beat if you're tight on time —
+  Beat A already shows the SQLi catch.
 
 ### 1:05–1:40 · Engineering  (cutaways to charts / terminal)
 - **Narrate:** *"Everything is tuned to an 8-gigabyte, CPU-only budget. I benchmarked
@@ -93,7 +97,7 @@ only demo beats that are **proven to work reliably on the shipping Q4 model**.
 ---
 
 ## Proof shots to capture (stills, for the Devpost gallery)
-1. **Problems panel** with the three findings (Beat A).
+1. **Problems panel** with the findings (Beat A) — 3 detector + SQLi + div-by-zero.
 2. **`submission_q4.json`** — RAM 2.21 GB, throttled=false, accuracy 0.82.
 3. **Airplane-mode toggle** mid-review (offline proof).
 4. **The model's SQLi explanation + fix** (Beat B prose).
